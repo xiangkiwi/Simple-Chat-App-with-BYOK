@@ -1,0 +1,44 @@
+{
+  "name": "simple-chat-desktop",
+  "version": "0.1.0",
+  "description": "A simple Windows desktop chat app with local API configuration.",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "dist": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.simplechat.desktop",
+    "productName": "Simple Chat",
+    "directories": {
+      "output": "outputs/dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false,
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Simple Chat"
+    }
+  },
+  "dependencies": {
+    "markdown-it": "^14.2.0"
+  }
+}

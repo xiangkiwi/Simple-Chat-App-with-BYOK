@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+outputs/
+dist/
+release/
+*.blockmap
+
+# Local app data and secrets
+config.json
+chats.json
+*.env
+.env
+.env.*
+
+# Local scratch and generated planning notes
+work/
+docs/superpowers/
+
+# Logs and OS files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chat</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="setup-view" id="setupView" hidden>
+        <div class="setup-panel">
+          <p class="eyebrow">Simple Chat</p>
+          <h1>先连接你的模型</h1>
+          <p class="setup-copy">只需要设置一次，之后打开就能直接聊天。</p>
+
+          <form id="setupForm" class="setup-form">
+            <label>
+              <span>API URL</span>
+              <input id="apiUrlInput" type="url" placeholder="https://api.openai.com/v1" required>
+            </label>
+            <label>
+              <span>API Key</span>
+              <input id="apiKeyInput" type="password" placeholder="输入你的 API Key" required>
+            </label>
+            <label>
+              <span>模型名</span>
+              <input id="modelInput" type="text" placeholder="gpt-5.4-mini" required>
+            </label>
+            <button type="submit" class="primary-button">保存并开始</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="chat-view" id="chatView" hidden>
+        <aside class="sidebar">
+          <div class="sidebar-top">
+            <button id="newChatButton" class="ghost-button" type="button">新聊天</button>
+          </div>
+          <p class="sidebar-label">Chats</p>
+          <div class="chat-list" id="chatList"></div>
+          <button id="settingsButton" class="ghost-button ghost-button-bottom" type="button">API 设置</button>
+        </aside>
+
+        <section class="conversation">
+          <header class="chat-header">
+            <div>
+              <p id="conversationTitle" class="conversation-title">新聊天</p>
+            </div>
+          </header>
+
+          <div id="messageList" class="message-list"></div>
+
+          <div class="composer-wrap">
+            <form id="chatForm" class="composer">
+              <div id="attachmentTray" class="attachment-tray" hidden></div>
+              <textarea id="messageInput" rows="2" placeholder="想聊什么？"></textarea>
+              <input id="imageInput" type="file" accept="image/*" multiple hidden>
+              <div class="composer-footer">
+                <div class="composer-left">
+                  <button id="imageButton" type="button" class="attach-button" title="添加图片">添加图片</button>
+                  <label class="search-toggle">
+                    <input id="webSearchToggle" type="checkbox">
+                    <span>联网</span>
+                  </label>
+                </div>
+                <div class="composer-right">
+                  <div class="reasoning-control" role="radiogroup" aria-label="回复模式">
+                    <button type="button" class="mode-button active" data-mode="快速">快速</button>
+                    <button type="button" class="mode-button" data-mode="均衡">均衡</button>
+                    <button type="button" class="mode-button" data-mode="深度">深度</button>
+                  </div>
+                  <button type="submit" class="send-button" aria-label="发送">↑</button>
+                </div>
+              </div>
+            </form>
+            <div class="model-strip">
+              <span>当前模式</span>
+              <strong id="modelName">模型</strong>
+            </div>
+          </div>
+          <p id="statusText" class="status-text"></p>
+        </section>
+      </section>
+    </main>
+
+    <div id="settingsModal" class="modal" hidden>
+      <form id="settingsForm" class="modal-panel">
+        <div class="modal-header">
+          <h2>设置</h2>
+          <button id="closeSettingsButton" class="icon-button" type="button">×</button>
+        </div>
+        <label>
+          <span>API URL</span>
+          <input id="settingsApiUrl" type="url" required>
+        </label>
+        <label>
+          <span>API Key</span>
+          <input id="settingsApiKey" type="password" required>
+        </label>
+        <label>
+          <span>模型名</span>
+          <input id="settingsModel" type="text" required>
+        </label>
+        <button type="submit" class="primary-button">保存设置</button>
+      </form>
+    </div>
+
+    <div id="renameModal" class="modal" hidden>
+      <form id="renameForm" class="modal-panel rename-panel">
+        <div class="modal-header">
+          <h2>重命名对话</h2>
+          <button id="closeRenameButton" class="icon-button" type="button">×</button>
+        </div>
+        <label>
+          <span>对话名称</span>
+          <input id="renameInput" type="text" autocomplete="off" required>
+        </label>
+        <div class="rename-actions">
+          <button type="button" id="cancelRenameButton" class="ghost-button">取消</button>
+          <button type="submit" class="primary-button">保存名称</button>
+        </div>
+      </form>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
