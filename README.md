@@ -12,6 +12,8 @@ A simple Windows desktop chat app built with Electron. Users bring their own API
 - Reasoning effort selector: fast, balanced, and deep.
 - Optional web search toggle for APIs that support Responses API web search tools.
 - Image upload by file picker or drag and drop.
+- Dedicated Video Creation workspace with text-to-video and image-plus-text-to-video inputs.
+- Separate Video API settings, aspect ratio, duration, quality, preview, download, copy link, and local video history.
 - Markdown rendering for assistant replies, including headings, bold text, lists, links, blockquotes, and code blocks.
 - Windows NSIS installer build through `electron-builder`.
 
@@ -59,10 +61,26 @@ The app sends requests to:
 
 API keys are not committed to this repository. They are entered by the user in the desktop app and stored locally by Electron in the user's app data folder.
 
+## Video API Configuration
+
+The Video Creation workspace has separate settings:
+
+- `Video API URL`, for example `https://video-api.example.com/v1`
+- `Video API Key`
+- `Video model name`
+
+The first implementation sends requests to:
+
+```text
+{Video API URL}/generate
+```
+
+The video API is expected to return a direct video URL. The app accepts common response fields such as `video_url`, `videoUrl`, `url`, and `output_url`.
+
 ## Privacy Notes
 
 - No API key is hardcoded in the source code.
-- Local configuration, preferences, and chat history are intentionally excluded from Git.
+- Local configuration, preferences, chat history, video API settings, and video history are intentionally excluded from Git.
 - Build outputs and `node_modules` are excluded from Git.
 
 ## Project Structure
@@ -75,6 +93,8 @@ src/
   markdown.js            Safe Markdown rendering
   preferences.js         Language and theme preference helpers
   preload.js             Renderer-safe API bridge
+  videoApi.js            Video generation request and response helpers
+  videos.js              Local video history helpers
   renderer/              HTML, CSS, and browser-side app code
 test/                    Node test suite
 ```
@@ -99,6 +119,8 @@ This project expects a Responses API-compatible endpoint. Some third-party provi
 - 支持 reasoning effort 档位：快速、均衡、深度。
 - 支持联网搜索开关，前提是配置的 API 支持 Responses API web search 工具。
 - 支持选择图片或拖拽图片上传。
+- 支持独立的视频制作页面，可以用文字或文字加图片生成视频。
+- 支持独立 Video API 设置、竖屏/横屏/方形比例、时长、清晰度、视频预览、下载、复制链接和本地视频历史。
 - 支持 Markdown 回复显示，包括标题、加粗、列表、链接、引用和代码块。
 - 支持通过 `electron-builder` 构建 Windows NSIS 安装包。
 
@@ -146,8 +168,24 @@ npm run dist
 
 API Key 不会提交到这个仓库。用户在软件里填写后，会由 Electron 保存在用户电脑本地。
 
+## Video API 设置
+
+视频制作页面有独立设置：
+
+- `Video API URL`，例如 `https://video-api.example.com/v1`
+- `Video API Key`
+- `视频模型名`
+
+软件会请求：
+
+```text
+{Video API URL}/generate
+```
+
+目前版本假设视频 API 会直接返回视频链接。软件支持常见返回字段，例如 `video_url`、`videoUrl`、`url` 和 `output_url`。
+
 ## 隐私说明
 
 - 源码里没有硬编码 API Key。
-- 本地配置、偏好设置和聊天记录都不会提交到 Git。
+- 本地配置、偏好设置、聊天记录、Video API 设置和视频历史都不会提交到 Git。
 - 构建产物和 `node_modules` 不会提交到 Git。

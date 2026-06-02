@@ -11,6 +11,8 @@ release/
 config.json
 chats.json
 preferences.json
+videoConfig.json
+videos.json
 *.env
 .env
 .env.*

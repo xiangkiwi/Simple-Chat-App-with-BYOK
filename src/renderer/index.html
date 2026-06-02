@@ -52,14 +52,21 @@
       <section class="chat-view" id="chatView" hidden>
         <aside class="sidebar">
           <div class="sidebar-top">
+            <div class="workspace-switcher" role="tablist" aria-label="Workspace">
+              <button id="chatWorkspaceButton" class="workspace-button active" type="button" data-i18n="chatWorkspace">聊天</button>
+              <button id="videoWorkspaceButton" class="workspace-button" type="button" data-i18n="videoWorkspace">视频制作</button>
+            </div>
             <button id="newChatButton" class="ghost-button" type="button" data-i18n="newChat">新聊天</button>
           </div>
           <p class="sidebar-label">Chats</p>
           <div class="chat-list" id="chatList"></div>
-          <button id="settingsButton" class="ghost-button ghost-button-bottom" type="button" data-i18n="apiSettings">API 设置</button>
+          <div class="sidebar-bottom-actions">
+            <button id="settingsButton" class="ghost-button" type="button" data-i18n="apiSettings">API 设置</button>
+            <button id="videoSettingsButton" class="ghost-button" type="button" data-i18n="videoApiSettings">Video API</button>
+          </div>
         </aside>
 
-        <section class="conversation">
+        <section class="conversation" id="conversationWorkspace">
           <header class="chat-header">
             <div>
               <p id="conversationTitle" class="conversation-title">新聊天</p>
@@ -98,6 +105,88 @@
           </div>
           <p id="statusText" class="status-text"></p>
         </section>
+
+        <section class="video-workspace" id="videoWorkspace" hidden>
+          <header class="video-header">
+            <div>
+              <p class="conversation-title" data-i18n="videoWorkspace">视频制作</p>
+              <p class="video-subtitle" data-i18n="videoSubtitle">输入文字，也可以加一张图片来生成视频。</p>
+            </div>
+          </header>
+
+          <div class="video-layout">
+            <form id="videoForm" class="video-form">
+              <label class="video-prompt-label">
+                <span data-i18n="videoPrompt">视频描述</span>
+                <textarea id="videoPromptInput" rows="6" data-i18n-placeholder="videoPromptPlaceholder" placeholder="描述你想生成的视频"></textarea>
+              </label>
+
+              <div id="videoImageDropzone" class="video-dropzone" role="button" tabindex="0">
+                <input id="videoImageInput" type="file" accept="image/*" hidden>
+                <div id="videoImageEmpty" class="video-dropzone-empty">
+                  <strong data-i18n="addReferenceImage">添加图片</strong>
+                  <span data-i18n="imageOptional">可选：拖拽图片到这里，或点击选择。</span>
+                </div>
+                <div id="videoImagePreview" class="video-image-preview" hidden>
+                  <img id="videoImageThumb" alt="Reference image">
+                  <button id="removeVideoImageButton" class="remove-attachment" type="button" data-i18n-title="removeImage" title="Remove image">x</button>
+                </div>
+              </div>
+
+              <div class="video-option-group">
+                <span class="option-label" data-i18n="aspectRatio">画面比例</span>
+                <div class="segmented-options" id="aspectRatioOptions">
+                  <button type="button" class="segment-button active" data-value="9:16" data-i18n="portrait">竖屏 9:16</button>
+                  <button type="button" class="segment-button" data-value="16:9" data-i18n="landscape">横屏 16:9</button>
+                  <button type="button" class="segment-button" data-value="1:1" data-i18n="square">方形 1:1</button>
+                </div>
+              </div>
+
+              <details class="advanced-video-options">
+                <summary data-i18n="advancedOptions">更多选项</summary>
+                <div class="advanced-grid">
+                  <label>
+                    <span data-i18n="duration">时长</span>
+                    <select id="videoDurationSelect">
+                      <option value="5" data-i18n="fiveSeconds">5 秒</option>
+                      <option value="10" data-i18n="tenSeconds">10 秒</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span data-i18n="quality">清晰度</span>
+                    <select id="videoQualitySelect">
+                      <option value="standard" data-i18n="standardQuality">标准</option>
+                      <option value="high" data-i18n="highQuality">高清</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span data-i18n="videoModelName">视频模型名</span>
+                    <input id="videoModelOverrideInput" type="text" data-i18n-placeholder="useSavedVideoModel" placeholder="使用已保存的视频模型">
+                  </label>
+                </div>
+              </details>
+
+              <button id="generateVideoButton" type="submit" class="primary-button" data-i18n="generateVideo">生成视频</button>
+              <p id="videoStatusText" class="status-text"></p>
+            </form>
+
+            <aside class="video-side-panel">
+              <section id="videoResultPanel" class="video-result-panel" hidden>
+                <p class="sidebar-label" data-i18n="latestVideo">最新视频</p>
+                <video id="videoPlayer" class="video-player" controls></video>
+                <div class="video-actions">
+                  <a id="downloadVideoLink" class="ghost-button" download target="_blank" rel="noreferrer" data-i18n="downloadVideo">下载</a>
+                  <button id="copyVideoLinkButton" class="ghost-button" type="button" data-i18n="copyVideoLink">复制链接</button>
+                </div>
+              </section>
+
+              <section class="video-history-section">
+                <p class="sidebar-label" data-i18n="videoHistory">视频历史</p>
+                <div id="videoHistoryList" class="video-history-list"></div>
+              </section>
+            </aside>
+          </div>
+        </section>
       </section>
     </main>
 
@@ -118,6 +207,28 @@
         <label>
           <span data-i18n="modelName">模型名</span>
           <input id="settingsModel" type="text" required>
+        </label>
+        <button type="submit" class="primary-button" data-i18n="saveSettings">保存设置</button>
+      </form>
+    </div>
+
+    <div id="videoSettingsModal" class="modal" hidden>
+      <form id="videoSettingsForm" class="modal-panel">
+        <div class="modal-header">
+          <h2 data-i18n="videoApiSettings">Video API 设置</h2>
+          <button id="closeVideoSettingsButton" class="icon-button" type="button">x</button>
+        </div>
+        <label>
+          <span>Video API URL</span>
+          <input id="videoSettingsApiUrl" type="url" placeholder="https://video-api.example.com/v1" required>
+        </label>
+        <label>
+          <span>Video API Key</span>
+          <input id="videoSettingsApiKey" type="password" required>
+        </label>
+        <label>
+          <span data-i18n="videoModelName">视频模型名</span>
+          <input id="videoSettingsModel" type="text" required>
         </label>
         <button type="submit" class="primary-button" data-i18n="saveSettings">保存设置</button>
       </form>

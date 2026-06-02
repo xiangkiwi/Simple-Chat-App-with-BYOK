@@ -15,6 +15,14 @@ const {
 } = require("./conversations");
 const { DEFAULT_PREFERENCES, normalizePreferences } = require("./preferences");
 const { readJson, readJsonIfExists, writeJson } = require("./store");
+const {
+  DEFAULT_VIDEO_CONFIG,
+  normalizeVideoConfig,
+  videoGenerateUrl,
+  extractVideoUrl,
+  buildVideoRequestBody,
+} = require("./videoApi");
+const { DEFAULT_VIDEOS, normalizeVideos, addVideo, deleteVideo } = require("./videos");
 
 const DEFAULT_CONFIG = {
   apiUrl: "",
@@ -35,16 +43,21 @@ function filePaths() {
     config: path.join(userData, "config.json"),
     chats: path.join(userData, "chats.json"),
     preferences: path.join(userData, "preferences.json"),
+    videoConfig: path.join(userData, "videoConfig.json"),
+    videos: path.join(userData, "videos.json"),
   };
 }
 
 function loadState() {
   const paths = filePaths();
   const config = readJson(paths.config, DEFAULT_CONFIG);
+  const videoConfig = normalizeVideoConfig(readJsonIfExists(paths.videoConfig, DEFAULT_VIDEO_CONFIG));
   const chats = normalizeChats(readJsonIfExists(paths.chats, DEFAULT_CHATS));
   const preferences = normalizePreferences(readJsonIfExists(paths.preferences, DEFAULT_PREFERENCES));
+  const videos = normalizeVideos(readJsonIfExists(paths.videos, DEFAULT_VIDEOS));
   writeJson(paths.chats, chats);
   writeJson(paths.preferences, preferences);
+  writeJson(paths.videos, videos);
 
   return {
     config: {
@@ -52,8 +65,10 @@ function loadState() {
       apiKey: config.apiKey || "",
       model: config.model || "",
     },
+    videoConfig,
     chats,
     preferences,
+    videos,
   };
 }
 
@@ -78,10 +93,80 @@ function savePreferences(preferences) {
   return cleanPreferences;
 }
 
+function saveVideoConfig(config) {
+  const cleanConfig = normalizeVideoConfig(config);
+  writeJson(filePaths().videoConfig, cleanConfig);
+  return cleanConfig;
+}
+
+function saveVideos(videos) {
+  writeJson(filePaths().videos, normalizeVideos(videos));
+}
+
 function validateConfig(config) {
   if (!config.apiUrl || !config.apiKey || !config.model) {
     throw new Error("请先填写 API URL、API Key 和模型名。");
   }
+}
+
+function validateVideoConfig(config) {
+  if (!config.apiUrl || !config.apiKey || !config.model) {
+    throw new Error("Please set Video API URL, Video API Key, and video model name first.");
+  }
+}
+
+async function generateVideo(_event, payload) {
+  const state = loadState();
+  validateVideoConfig(state.videoConfig);
+
+  const prompt = String(payload?.prompt || "").trim();
+  if (!prompt) {
+    throw new Error("Please enter a video description.");
+  }
+
+  const response = await fetch(videoGenerateUrl(state.videoConfig.apiUrl), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${state.videoConfig.apiKey}`,
+    },
+    body: JSON.stringify(
+      buildVideoRequestBody({
+        model: payload?.model || state.videoConfig.model,
+        prompt,
+        image: payload?.image,
+        aspectRatio: payload?.aspectRatio,
+        duration: payload?.duration,
+        quality: payload?.quality,
+      })
+    ),
+  });
+
+  const responsePayload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = responsePayload?.error?.message || "Video generation failed. Please check the Video API settings.";
+    throw new Error(message);
+  }
+
+  const videoUrl = extractVideoUrl(responsePayload);
+  if (!videoUrl) {
+    throw new Error("The Video API did not return a video URL.");
+  }
+
+  const videos = addVideo(state.videos, {
+    prompt,
+    image: payload?.image,
+    videoUrl,
+    aspectRatio: payload?.aspectRatio,
+    duration: payload?.duration,
+    quality: payload?.quality,
+  });
+  saveVideos(videos);
+
+  return {
+    video: videos.items[0],
+    videos,
+  };
 }
 
 async function sendMessage(_event, { content, images = [], reasoningLabel, useWebSearch }) {
@@ -170,8 +255,16 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   ipcMain.handle("get-state", loadState);
   ipcMain.handle("save-config", (_event, config) => saveConfig(config));
+  ipcMain.handle("save-video-config", (_event, config) => saveVideoConfig(config));
   ipcMain.handle("save-preferences", (_event, preferences) => savePreferences(preferences));
   ipcMain.handle("send-message", sendMessage);
+  ipcMain.handle("generate-video", generateVideo);
+  ipcMain.handle("get-videos", () => loadState().videos);
+  ipcMain.handle("delete-video", (_event, videoId) => {
+    const videos = deleteVideo(loadState().videos, videoId);
+    saveVideos(videos);
+    return videos;
+  });
   ipcMain.handle("get-chats", () => loadState().chats);
   ipcMain.handle("create-chat", () => {
     const chats = createConversation(loadState().chats);

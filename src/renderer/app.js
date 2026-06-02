@@ -1,5 +1,9 @@
 const setupView = document.querySelector("#setupView");
 const chatView = document.querySelector("#chatView");
+const conversationWorkspace = document.querySelector("#conversationWorkspace");
+const videoWorkspace = document.querySelector("#videoWorkspace");
+const chatWorkspaceButton = document.querySelector("#chatWorkspaceButton");
+const videoWorkspaceButton = document.querySelector("#videoWorkspaceButton");
 const setupForm = document.querySelector("#setupForm");
 const apiUrlInput = document.querySelector("#apiUrlInput");
 const apiKeyInput = document.querySelector("#apiKeyInput");
@@ -35,6 +39,32 @@ const imagePreviewModal = document.querySelector("#imagePreviewModal");
 const imagePreviewImage = document.querySelector("#imagePreviewImage");
 const imagePreviewTitle = document.querySelector("#imagePreviewTitle");
 const closeImagePreviewButton = document.querySelector("#closeImagePreviewButton");
+const videoSettingsButton = document.querySelector("#videoSettingsButton");
+const videoSettingsModal = document.querySelector("#videoSettingsModal");
+const videoSettingsForm = document.querySelector("#videoSettingsForm");
+const closeVideoSettingsButton = document.querySelector("#closeVideoSettingsButton");
+const videoSettingsApiUrl = document.querySelector("#videoSettingsApiUrl");
+const videoSettingsApiKey = document.querySelector("#videoSettingsApiKey");
+const videoSettingsModel = document.querySelector("#videoSettingsModel");
+const videoForm = document.querySelector("#videoForm");
+const videoPromptInput = document.querySelector("#videoPromptInput");
+const videoImageDropzone = document.querySelector("#videoImageDropzone");
+const videoImageInput = document.querySelector("#videoImageInput");
+const videoImageEmpty = document.querySelector("#videoImageEmpty");
+const videoImagePreview = document.querySelector("#videoImagePreview");
+const videoImageThumb = document.querySelector("#videoImageThumb");
+const removeVideoImageButton = document.querySelector("#removeVideoImageButton");
+const aspectRatioOptions = document.querySelector("#aspectRatioOptions");
+const videoDurationSelect = document.querySelector("#videoDurationSelect");
+const videoQualitySelect = document.querySelector("#videoQualitySelect");
+const videoModelOverrideInput = document.querySelector("#videoModelOverrideInput");
+const generateVideoButton = document.querySelector("#generateVideoButton");
+const videoStatusText = document.querySelector("#videoStatusText");
+const videoResultPanel = document.querySelector("#videoResultPanel");
+const videoPlayer = document.querySelector("#videoPlayer");
+const downloadVideoLink = document.querySelector("#downloadVideoLink");
+const copyVideoLinkButton = document.querySelector("#copyVideoLinkButton");
+const videoHistoryList = document.querySelector("#videoHistoryList");
 
 const chatContextMenu = document.createElement("div");
 chatContextMenu.className = "chat-context-menu";
@@ -43,29 +73,49 @@ document.body.append(chatContextMenu);
 
 let state = {
   config: { apiUrl: "", apiKey: "", model: "" },
+  videoConfig: { apiUrl: "", apiKey: "", model: "" },
   chats: { activeConversationId: "", conversations: [] },
+  videos: { items: [] },
   preferences: { language: "zh", theme: "light" },
 };
 let reasoningLabel = "快速";
 let pendingImages = [];
+let pendingVideoImage = null;
+let activeWorkspace = "chat";
+let selectedAspectRatio = "9:16";
+let latestVideoUrl = "";
 let menuConversationId = "";
 let renameConversationId = "";
 
 const translations = {
   zh: {
     addImage: "添加图片",
+    addReferenceImage: "添加图片",
+    advancedOptions: "更多选项",
     apiKeyPlaceholder: "输入你的 API Key",
     apiSettings: "API 设置",
+    aspectRatio: "画面比例",
     balanced: "均衡",
     cancel: "取消",
+    chatWorkspace: "聊天",
+    copyVideoLink: "复制链接",
     chatDeleted: "对话已删除。",
     chatName: "对话名称",
     currentModel: "当前模式",
     darkMode: "深色",
     deep: "深度",
     delete: "删除",
+    downloadVideo: "下载",
+    duration: "时长",
     emptyState: "这里还没有聊天记录。写下第一句话，就可以开始了。",
     fast: "快速",
+    fiveSeconds: "5 秒",
+    generateVideo: "生成视频",
+    generatingVideo: "正在生成视频...",
+    highQuality: "高清",
+    imageOptional: "可选：拖拽图片到这里，或点击选择。",
+    landscape: "横屏 16:9",
+    latestVideo: "最新视频",
     language: "语言",
     lightMode: "浅色",
     messagePlaceholder: "想聊什么？",
@@ -81,28 +131,61 @@ const translations = {
     saveSettings: "保存设置",
     settings: "设置",
     settingsSaved: "设置已保存。",
+    portrait: "竖屏 9:16",
+    quality: "清晰度",
+    removeImage: "移除图片",
     setupCopy: "只需要设置一次，之后打开就能直接聊天。",
     setupError: "设置保存失败，请重新检查后再试。",
     setupTitle: "先连接你的模型",
+    square: "方形 1:1",
+    standardQuality: "标准",
     theme: "主题",
+    tenSeconds: "10 秒",
     untitled: "新聊天",
     unpin: "取消置顶",
+    useSavedVideoModel: "使用已保存的视频模型",
+    videoApiSettings: "Video API 设置",
+    videoCopied: "视频链接已复制。",
+    videoDeleted: "视频已删除。",
+    videoEmptyHistory: "还没有生成过视频。",
+    videoGenerated: "视频生成完成。",
+    videoHistory: "视频历史",
+    videoModelName: "视频模型名",
+    videoPrompt: "视频描述",
+    videoPromptPlaceholder: "描述你想生成的视频",
+    videoSettingsSaved: "Video API 设置已保存。",
+    videoSubtitle: "输入文字，也可以加一张图片来生成视频。",
+    videoWorkspace: "视频制作",
     webSearch: "联网",
   },
   en: {
     addImage: "Add image",
+    addReferenceImage: "Add image",
+    advancedOptions: "More options",
     apiKeyPlaceholder: "Enter your API key",
     apiSettings: "API settings",
+    aspectRatio: "Aspect ratio",
     balanced: "Balanced",
     cancel: "Cancel",
+    chatWorkspace: "Chat",
+    copyVideoLink: "Copy link",
     chatDeleted: "Chat deleted.",
     chatName: "Chat name",
     currentModel: "Current model",
     darkMode: "Dark",
     deep: "Deep",
     delete: "Delete",
+    downloadVideo: "Download",
+    duration: "Duration",
     emptyState: "No messages yet. Write the first message to begin.",
     fast: "Fast",
+    fiveSeconds: "5 seconds",
+    generateVideo: "Generate video",
+    generatingVideo: "Generating video...",
+    highQuality: "High",
+    imageOptional: "Optional: drop an image here, or click to choose.",
+    landscape: "Landscape 16:9",
+    latestVideo: "Latest video",
     language: "Language",
     lightMode: "Light",
     messagePlaceholder: "What would you like to chat about?",
@@ -118,12 +201,31 @@ const translations = {
     saveSettings: "Save settings",
     settings: "Settings",
     settingsSaved: "Settings saved.",
+    portrait: "Portrait 9:16",
+    quality: "Quality",
+    removeImage: "Remove image",
     setupCopy: "Set this up once, then open the app and chat anytime.",
     setupError: "Settings could not be saved. Please check and try again.",
     setupTitle: "Connect your model",
+    square: "Square 1:1",
+    standardQuality: "Standard",
     theme: "Theme",
+    tenSeconds: "10 seconds",
     untitled: "New chat",
     unpin: "Unpin",
+    useSavedVideoModel: "Use saved video model",
+    videoApiSettings: "Video API settings",
+    videoCopied: "Video link copied.",
+    videoDeleted: "Video deleted.",
+    videoEmptyHistory: "No videos yet.",
+    videoGenerated: "Video generated.",
+    videoHistory: "Video history",
+    videoModelName: "Video model name",
+    videoPrompt: "Video description",
+    videoPromptPlaceholder: "Describe the video you want to create",
+    videoSettingsSaved: "Video API settings saved.",
+    videoSubtitle: "Enter text, and optionally add one image to create a video.",
+    videoWorkspace: "Video Creation",
     webSearch: "Web",
   },
 };
@@ -180,6 +282,24 @@ function hasConfig(config) {
 function setStatus(message, isError = false) {
   statusText.textContent = message;
   statusText.classList.toggle("error", isError);
+}
+
+function setVideoStatus(message, isError = false) {
+  videoStatusText.textContent = message;
+  videoStatusText.classList.toggle("error", isError);
+}
+
+function showWorkspace(workspace) {
+  activeWorkspace = workspace === "video" ? "video" : "chat";
+  conversationWorkspace.hidden = activeWorkspace !== "chat";
+  videoWorkspace.hidden = activeWorkspace !== "video";
+  chatWorkspaceButton.classList.toggle("active", activeWorkspace === "chat");
+  videoWorkspaceButton.classList.toggle("active", activeWorkspace === "video");
+  newChatButton.hidden = activeWorkspace !== "chat";
+  chatList.hidden = activeWorkspace !== "chat";
+  if (activeWorkspace === "video") {
+    renderVideoHistory();
+  }
 }
 
 function setSetupError(message) {
@@ -272,6 +392,104 @@ function closeImagePreview() {
   imagePreviewTitle.textContent = t("imagePreview");
 }
 
+function hasVideoConfig(config) {
+  return Boolean(config?.apiUrl && config?.apiKey && config?.model);
+}
+
+function renderVideoImage() {
+  videoImagePreview.hidden = !pendingVideoImage;
+  videoImageEmpty.hidden = Boolean(pendingVideoImage);
+  if (pendingVideoImage?.dataUrl) {
+    videoImageThumb.src = pendingVideoImage.dataUrl;
+    videoImageThumb.alt = pendingVideoImage.name || t("addReferenceImage");
+  } else {
+    videoImageThumb.removeAttribute("src");
+  }
+}
+
+function renderVideoResult(video) {
+  if (!video?.videoUrl) {
+    videoResultPanel.hidden = true;
+    latestVideoUrl = "";
+    return;
+  }
+
+  latestVideoUrl = video.videoUrl;
+  videoPlayer.src = video.videoUrl;
+  downloadVideoLink.href = video.videoUrl;
+  videoResultPanel.hidden = false;
+}
+
+function renderVideoHistory() {
+  videoHistoryList.innerHTML = "";
+  const videos = Array.isArray(state.videos?.items) ? state.videos.items : [];
+
+  if (!videos.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state compact";
+    empty.textContent = t("videoEmptyHistory");
+    videoHistoryList.append(empty);
+    return;
+  }
+
+  for (const video of videos) {
+    const item = document.createElement("article");
+    item.className = "video-history-item";
+
+    const preview = document.createElement("button");
+    preview.type = "button";
+    preview.className = "video-history-preview";
+    preview.textContent = "▶";
+    if (video.sourceImage?.dataUrl) {
+      const image = document.createElement("img");
+      image.src = video.sourceImage.dataUrl;
+      image.alt = video.title;
+      preview.textContent = "";
+      preview.append(image);
+    }
+    preview.addEventListener("click", () => renderVideoResult(video));
+
+    const meta = document.createElement("div");
+    meta.className = "video-history-meta";
+    const title = document.createElement("strong");
+    title.textContent = video.title || t("videoWorkspace");
+    const details = document.createElement("span");
+    details.textContent = `${video.aspectRatio || "9:16"} · ${video.duration || "5"}s · ${video.quality || "standard"}`;
+    meta.append(title, details);
+
+    const actions = document.createElement("div");
+    actions.className = "video-history-actions";
+
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "chat-action-button";
+    copy.title = t("copyVideoLink");
+    copy.textContent = "⧉";
+    copy.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(video.videoUrl);
+      setVideoStatus(t("videoCopied"));
+    });
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "chat-action-button";
+    remove.title = t("delete");
+    remove.innerHTML = iconSvg("trash");
+    remove.addEventListener("click", async () => {
+      state.videos = await window.simpleChat.deleteVideo(video.id);
+      if (latestVideoUrl === video.videoUrl) {
+        renderVideoResult(null);
+      }
+      renderVideoHistory();
+      setVideoStatus(t("videoDeleted"));
+    });
+
+    actions.append(copy, remove);
+    item.append(preview, meta, actions);
+    videoHistoryList.append(item);
+  }
+}
+
 function makeImagePreviewable(thumbnail, image) {
   thumbnail.classList.add("message-image-thumb");
   thumbnail.tabIndex = 0;
@@ -349,7 +567,9 @@ async function showChat() {
   setupView.hidden = true;
   chatView.hidden = false;
   modelName.textContent = state.config.model || t("modelFallback");
+  showWorkspace(activeWorkspace);
   renderChatList();
+  renderVideoHistory();
   await renderConversation();
 }
 
@@ -526,6 +746,14 @@ async function saveConfig(config) {
   modelName.textContent = state.config.model || t("modelFallback");
 }
 
+async function saveVideoConfig(config) {
+  state.videoConfig = await window.simpleChat.saveVideoConfig({
+    apiUrl: config.apiUrl.value.trim(),
+    apiKey: config.apiKey.value.trim(),
+    model: config.model.value.trim(),
+  });
+}
+
 setupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const config = formConfigFrom({
@@ -593,6 +821,63 @@ imageInput.addEventListener("change", async () => {
   imageInput.value = "";
 });
 
+chatWorkspaceButton.addEventListener("click", () => showWorkspace("chat"));
+videoWorkspaceButton.addEventListener("click", () => showWorkspace("video"));
+
+videoImageDropzone.addEventListener("click", () => {
+  videoImageInput.click();
+});
+
+videoImageDropzone.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    videoImageInput.click();
+  }
+});
+
+videoImageInput.addEventListener("change", async () => {
+  const [file] = Array.from(videoImageInput.files || []).filter((item) => item.type.startsWith("image/"));
+  if (file) {
+    pendingVideoImage = await fileToImage(file);
+    renderVideoImage();
+  }
+  videoImageInput.value = "";
+});
+
+videoImageDropzone.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  videoImageDropzone.classList.add("dragging");
+});
+
+videoImageDropzone.addEventListener("dragleave", () => {
+  videoImageDropzone.classList.remove("dragging");
+});
+
+videoImageDropzone.addEventListener("drop", async (event) => {
+  event.preventDefault();
+  videoImageDropzone.classList.remove("dragging");
+  const [file] = Array.from(event.dataTransfer.files || []).filter((item) => item.type.startsWith("image/"));
+  if (file) {
+    pendingVideoImage = await fileToImage(file);
+    renderVideoImage();
+  }
+});
+
+removeVideoImageButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  pendingVideoImage = null;
+  renderVideoImage();
+});
+
+for (const button of aspectRatioOptions.querySelectorAll(".segment-button")) {
+  button.addEventListener("click", () => {
+    selectedAspectRatio = button.dataset.value;
+    for (const item of aspectRatioOptions.querySelectorAll(".segment-button")) {
+      item.classList.toggle("active", item === button);
+    }
+  });
+}
+
 chatView.addEventListener("dragover", (event) => {
   event.preventDefault();
   chatView.classList.add("dragging");
@@ -657,6 +942,79 @@ settingsForm.addEventListener("submit", async (event) => {
   setStatus(t("settingsSaved"));
 });
 
+videoSettingsButton.addEventListener("click", () => {
+  videoSettingsApiUrl.value = state.videoConfig.apiUrl || "";
+  videoSettingsApiKey.value = state.videoConfig.apiKey || "";
+  videoSettingsModel.value = state.videoConfig.model || "";
+  videoSettingsModal.hidden = false;
+});
+
+closeVideoSettingsButton.addEventListener("click", () => {
+  videoSettingsModal.hidden = true;
+});
+
+videoSettingsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await saveVideoConfig({
+    apiUrl: videoSettingsApiUrl,
+    apiKey: videoSettingsApiKey,
+    model: videoSettingsModel,
+  });
+  videoSettingsModal.hidden = true;
+  setVideoStatus(t("videoSettingsSaved"));
+});
+
+videoSettingsModal.addEventListener("click", (event) => {
+  if (event.target === videoSettingsModal) {
+    videoSettingsModal.hidden = true;
+  }
+});
+
+videoForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const prompt = videoPromptInput.value.trim();
+  if (!prompt) {
+    setVideoStatus(t("videoPromptPlaceholder"), true);
+    return;
+  }
+
+  if (!hasVideoConfig(state.videoConfig)) {
+    videoSettingsButton.click();
+    setVideoStatus(t("videoApiSettings"), true);
+    return;
+  }
+
+  generateVideoButton.disabled = true;
+  setVideoStatus(t("generatingVideo"));
+
+  try {
+    const result = await window.simpleChat.generateVideo({
+      prompt,
+      image: pendingVideoImage,
+      aspectRatio: selectedAspectRatio,
+      duration: videoDurationSelect.value,
+      quality: videoQualitySelect.value,
+      model: videoModelOverrideInput.value.trim() || state.videoConfig.model,
+    });
+    state.videos = result.videos;
+    renderVideoResult(result.video);
+    renderVideoHistory();
+    setVideoStatus(t("videoGenerated"));
+  } catch (error) {
+    setVideoStatus(error.message || "Video generation failed.", true);
+  } finally {
+    generateVideoButton.disabled = false;
+  }
+});
+
+copyVideoLinkButton.addEventListener("click", async () => {
+  if (!latestVideoUrl) {
+    return;
+  }
+  await navigator.clipboard.writeText(latestVideoUrl);
+  setVideoStatus(t("videoCopied"));
+});
+
 renameForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const title = renameInput.value.trim();
@@ -713,6 +1071,9 @@ document.addEventListener("keydown", (event) => {
     }
     if (!imagePreviewModal.hidden) {
       closeImagePreview();
+    }
+    if (!videoSettingsModal.hidden) {
+      videoSettingsModal.hidden = true;
     }
   }
 });
