@@ -31,6 +31,10 @@ const closeRenameButton = document.querySelector("#closeRenameButton");
 const cancelRenameButton = document.querySelector("#cancelRenameButton");
 const languageSelect = document.querySelector("#languageSelect");
 const themeSelect = document.querySelector("#themeSelect");
+const imagePreviewModal = document.querySelector("#imagePreviewModal");
+const imagePreviewImage = document.querySelector("#imagePreviewImage");
+const imagePreviewTitle = document.querySelector("#imagePreviewTitle");
+const closeImagePreviewButton = document.querySelector("#closeImagePreviewButton");
 
 const chatContextMenu = document.createElement("div");
 chatContextMenu.className = "chat-context-menu";
@@ -123,6 +127,11 @@ const translations = {
     webSearch: "Web",
   },
 };
+
+translations.zh.imagePreview = "预览图片";
+translations.zh.closePreview = "关闭预览";
+translations.en.imagePreview = "Preview image";
+translations.en.closePreview = "Close preview";
 
 function t(key) {
   const language = state.preferences?.language === "en" ? "en" : "zh";
@@ -241,6 +250,40 @@ function closeRenameModal() {
   renameModal.hidden = true;
   renameConversationId = "";
   renameInput.value = "";
+}
+
+function openImagePreview(image) {
+  if (!image?.dataUrl) {
+    return;
+  }
+
+  const title = image.name || t("imagePreview");
+  imagePreviewImage.src = image.dataUrl;
+  imagePreviewImage.alt = title;
+  imagePreviewTitle.textContent = title;
+  imagePreviewModal.hidden = false;
+  closeImagePreviewButton.focus();
+}
+
+function closeImagePreview() {
+  imagePreviewModal.hidden = true;
+  imagePreviewImage.removeAttribute("src");
+  imagePreviewImage.alt = t("imagePreview");
+  imagePreviewTitle.textContent = t("imagePreview");
+}
+
+function makeImagePreviewable(thumbnail, image) {
+  thumbnail.classList.add("message-image-thumb");
+  thumbnail.tabIndex = 0;
+  thumbnail.setAttribute("role", "button");
+  thumbnail.setAttribute("aria-label", image.name ? `${t("imagePreview")}: ${image.name}` : t("imagePreview"));
+  thumbnail.addEventListener("click", () => openImagePreview(image));
+  thumbnail.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openImagePreview(image);
+    }
+  });
 }
 
 function openChatContextMenu(conversation, x, y) {
@@ -406,6 +449,7 @@ async function renderConversation() {
         const thumbnail = document.createElement("img");
         thumbnail.src = image.dataUrl;
         thumbnail.alt = image.name || "图片";
+        makeImagePreviewable(thumbnail, image);
         images.append(thumbnail);
       }
       item.append(images);
@@ -427,6 +471,7 @@ function renderAttachments() {
     const thumbnail = document.createElement("img");
     thumbnail.src = image.dataUrl;
     thumbnail.alt = image.name;
+    makeImagePreviewable(thumbnail, image);
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -633,6 +678,13 @@ renameModal.addEventListener("click", (event) => {
   }
 });
 
+closeImagePreviewButton.addEventListener("click", closeImagePreview);
+imagePreviewModal.addEventListener("click", (event) => {
+  if (event.target === imagePreviewModal) {
+    closeImagePreview();
+  }
+});
+
 newChatButton.addEventListener("click", async () => {
   state.chats = await window.simpleChat.createChat();
   renderChatList();
@@ -658,6 +710,9 @@ document.addEventListener("keydown", (event) => {
     hideChatContextMenu();
     if (!renameModal.hidden) {
       closeRenameModal();
+    }
+    if (!imagePreviewModal.hidden) {
+      closeImagePreview();
     }
   }
 });
