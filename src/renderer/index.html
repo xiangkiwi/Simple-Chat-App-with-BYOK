@@ -7,12 +7,29 @@
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
+    <div class="global-preferences">
+      <label class="preference-select">
+        <span data-i18n="language">语言</span>
+        <select id="languageSelect" aria-label="Language">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+      <label class="preference-select">
+        <span data-i18n="theme">主题</span>
+        <select id="themeSelect" aria-label="Theme">
+          <option value="light" data-i18n="lightMode">浅色</option>
+          <option value="dark" data-i18n="darkMode">深色</option>
+        </select>
+      </label>
+    </div>
+
     <main class="app-shell">
       <section class="setup-view" id="setupView" hidden>
         <div class="setup-panel">
           <p class="eyebrow">Simple Chat</p>
-          <h1>先连接你的模型</h1>
-          <p class="setup-copy">只需要设置一次，之后打开就能直接聊天。</p>
+          <h1 data-i18n="setupTitle">先连接你的模型</h1>
+          <p class="setup-copy" data-i18n="setupCopy">只需要设置一次，之后打开就能直接聊天。</p>
 
           <form id="setupForm" class="setup-form">
             <label>
@@ -21,13 +38,13 @@
             </label>
             <label>
               <span>API Key</span>
-              <input id="apiKeyInput" type="password" placeholder="输入你的 API Key" required>
+              <input id="apiKeyInput" type="password" data-i18n-placeholder="apiKeyPlaceholder" placeholder="输入你的 API Key" required>
             </label>
             <label>
-              <span>模型名</span>
+              <span data-i18n="modelName">模型名</span>
               <input id="modelInput" type="text" placeholder="gpt-5.4-mini" required>
             </label>
-            <button type="submit" class="primary-button">保存并开始</button>
+            <button type="submit" class="primary-button" data-i18n="saveAndStart">保存并开始</button>
           </form>
         </div>
       </section>
@@ -35,11 +52,11 @@
       <section class="chat-view" id="chatView" hidden>
         <aside class="sidebar">
           <div class="sidebar-top">
-            <button id="newChatButton" class="ghost-button" type="button">新聊天</button>
+            <button id="newChatButton" class="ghost-button" type="button" data-i18n="newChat">新聊天</button>
           </div>
           <p class="sidebar-label">Chats</p>
           <div class="chat-list" id="chatList"></div>
-          <button id="settingsButton" class="ghost-button ghost-button-bottom" type="button">API 设置</button>
+          <button id="settingsButton" class="ghost-button ghost-button-bottom" type="button" data-i18n="apiSettings">API 设置</button>
         </aside>
 
         <section class="conversation">
@@ -54,28 +71,28 @@
           <div class="composer-wrap">
             <form id="chatForm" class="composer">
               <div id="attachmentTray" class="attachment-tray" hidden></div>
-              <textarea id="messageInput" rows="2" placeholder="想聊什么？"></textarea>
+              <textarea id="messageInput" rows="2" data-i18n-placeholder="messagePlaceholder" placeholder="想聊什么？"></textarea>
               <input id="imageInput" type="file" accept="image/*" multiple hidden>
               <div class="composer-footer">
                 <div class="composer-left">
-                  <button id="imageButton" type="button" class="attach-button" title="添加图片">添加图片</button>
+                  <button id="imageButton" type="button" class="attach-button" data-i18n="addImage" data-i18n-title="addImage" title="添加图片">添加图片</button>
                   <label class="search-toggle">
                     <input id="webSearchToggle" type="checkbox">
-                    <span>联网</span>
+                    <span data-i18n="webSearch">联网</span>
                   </label>
                 </div>
                 <div class="composer-right">
                   <div class="reasoning-control" role="radiogroup" aria-label="回复模式">
-                    <button type="button" class="mode-button active" data-mode="快速">快速</button>
-                    <button type="button" class="mode-button" data-mode="均衡">均衡</button>
-                    <button type="button" class="mode-button" data-mode="深度">深度</button>
+                    <button type="button" class="mode-button active" data-mode="快速" data-i18n="fast">快速</button>
+                    <button type="button" class="mode-button" data-mode="均衡" data-i18n="balanced">均衡</button>
+                    <button type="button" class="mode-button" data-mode="深度" data-i18n="deep">深度</button>
                   </div>
                   <button type="submit" class="send-button" aria-label="发送">↑</button>
                 </div>
               </div>
             </form>
             <div class="model-strip">
-              <span>当前模式</span>
+              <span data-i18n="currentModel">当前模式</span>
               <strong id="modelName">模型</strong>
             </div>
           </div>
@@ -87,7 +104,7 @@
     <div id="settingsModal" class="modal" hidden>
       <form id="settingsForm" class="modal-panel">
         <div class="modal-header">
-          <h2>设置</h2>
+          <h2 data-i18n="settings">设置</h2>
           <button id="closeSettingsButton" class="icon-button" type="button">×</button>
         </div>
         <label>
@@ -99,26 +116,26 @@
           <input id="settingsApiKey" type="password" required>
         </label>
         <label>
-          <span>模型名</span>
+          <span data-i18n="modelName">模型名</span>
           <input id="settingsModel" type="text" required>
         </label>
-        <button type="submit" class="primary-button">保存设置</button>
+        <button type="submit" class="primary-button" data-i18n="saveSettings">保存设置</button>
       </form>
     </div>
 
     <div id="renameModal" class="modal" hidden>
       <form id="renameForm" class="modal-panel rename-panel">
         <div class="modal-header">
-          <h2>重命名对话</h2>
+          <h2 data-i18n="renameChat">重命名对话</h2>
           <button id="closeRenameButton" class="icon-button" type="button">×</button>
         </div>
         <label>
-          <span>对话名称</span>
+          <span data-i18n="chatName">对话名称</span>
           <input id="renameInput" type="text" autocomplete="off" required>
         </label>
         <div class="rename-actions">
-          <button type="button" id="cancelRenameButton" class="ghost-button">取消</button>
-          <button type="submit" class="primary-button">保存名称</button>
+          <button type="button" id="cancelRenameButton" class="ghost-button" data-i18n="cancel">取消</button>
+          <button type="submit" class="primary-button" data-i18n="saveName">保存名称</button>
         </div>
       </form>
     </div>

@@ -13,6 +13,7 @@ const {
   togglePinnedConversation,
   activeConversation,
 } = require("./conversations");
+const { DEFAULT_PREFERENCES, normalizePreferences } = require("./preferences");
 const { readJson, readJsonIfExists, writeJson } = require("./store");
 
 const DEFAULT_CONFIG = {
@@ -33,6 +34,7 @@ function filePaths() {
   return {
     config: path.join(userData, "config.json"),
     chats: path.join(userData, "chats.json"),
+    preferences: path.join(userData, "preferences.json"),
   };
 }
 
@@ -40,7 +42,9 @@ function loadState() {
   const paths = filePaths();
   const config = readJson(paths.config, DEFAULT_CONFIG);
   const chats = normalizeChats(readJsonIfExists(paths.chats, DEFAULT_CHATS));
+  const preferences = normalizePreferences(readJsonIfExists(paths.preferences, DEFAULT_PREFERENCES));
   writeJson(paths.chats, chats);
+  writeJson(paths.preferences, preferences);
 
   return {
     config: {
@@ -49,6 +53,7 @@ function loadState() {
       model: config.model || "",
     },
     chats,
+    preferences,
   };
 }
 
@@ -65,6 +70,12 @@ function saveConfig(config) {
 
 function saveChats(chats) {
   writeJson(filePaths().chats, chats);
+}
+
+function savePreferences(preferences) {
+  const cleanPreferences = normalizePreferences(preferences);
+  writeJson(filePaths().preferences, cleanPreferences);
+  return cleanPreferences;
 }
 
 function validateConfig(config) {
@@ -159,6 +170,7 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   ipcMain.handle("get-state", loadState);
   ipcMain.handle("save-config", (_event, config) => saveConfig(config));
+  ipcMain.handle("save-preferences", (_event, preferences) => savePreferences(preferences));
   ipcMain.handle("send-message", sendMessage);
   ipcMain.handle("get-chats", () => loadState().chats);
   ipcMain.handle("create-chat", () => {

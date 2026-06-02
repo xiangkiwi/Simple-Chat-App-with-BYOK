@@ -29,6 +29,8 @@ const renameForm = document.querySelector("#renameForm");
 const renameInput = document.querySelector("#renameInput");
 const closeRenameButton = document.querySelector("#closeRenameButton");
 const cancelRenameButton = document.querySelector("#cancelRenameButton");
+const languageSelect = document.querySelector("#languageSelect");
+const themeSelect = document.querySelector("#themeSelect");
 
 const chatContextMenu = document.createElement("div");
 chatContextMenu.className = "chat-context-menu";
@@ -38,11 +40,129 @@ document.body.append(chatContextMenu);
 let state = {
   config: { apiUrl: "", apiKey: "", model: "" },
   chats: { activeConversationId: "", conversations: [] },
+  preferences: { language: "zh", theme: "light" },
 };
 let reasoningLabel = "快速";
 let pendingImages = [];
 let menuConversationId = "";
 let renameConversationId = "";
+
+const translations = {
+  zh: {
+    addImage: "添加图片",
+    apiKeyPlaceholder: "输入你的 API Key",
+    apiSettings: "API 设置",
+    balanced: "均衡",
+    cancel: "取消",
+    chatDeleted: "对话已删除。",
+    chatName: "对话名称",
+    currentModel: "当前模式",
+    darkMode: "深色",
+    deep: "深度",
+    delete: "删除",
+    emptyState: "这里还没有聊天记录。写下第一句话，就可以开始了。",
+    fast: "快速",
+    language: "语言",
+    lightMode: "浅色",
+    messagePlaceholder: "想聊什么？",
+    modelFallback: "未设置模型",
+    modelName: "模型名",
+    newChat: "新聊天",
+    newChatStarted: "已开始新的聊天。",
+    pin: "置顶",
+    rename: "重命名",
+    renameChat: "重命名对话",
+    saveAndStart: "保存并开始",
+    saveName: "保存名称",
+    saveSettings: "保存设置",
+    settings: "设置",
+    settingsSaved: "设置已保存。",
+    setupCopy: "只需要设置一次，之后打开就能直接聊天。",
+    setupError: "设置保存失败，请重新检查后再试。",
+    setupTitle: "先连接你的模型",
+    theme: "主题",
+    untitled: "新聊天",
+    unpin: "取消置顶",
+    webSearch: "联网",
+  },
+  en: {
+    addImage: "Add image",
+    apiKeyPlaceholder: "Enter your API key",
+    apiSettings: "API settings",
+    balanced: "Balanced",
+    cancel: "Cancel",
+    chatDeleted: "Chat deleted.",
+    chatName: "Chat name",
+    currentModel: "Current model",
+    darkMode: "Dark",
+    deep: "Deep",
+    delete: "Delete",
+    emptyState: "No messages yet. Write the first message to begin.",
+    fast: "Fast",
+    language: "Language",
+    lightMode: "Light",
+    messagePlaceholder: "What would you like to chat about?",
+    modelFallback: "No model set",
+    modelName: "Model name",
+    newChat: "New chat",
+    newChatStarted: "Started a new chat.",
+    pin: "Pin",
+    rename: "Rename",
+    renameChat: "Rename chat",
+    saveAndStart: "Save and start",
+    saveName: "Save name",
+    saveSettings: "Save settings",
+    settings: "Settings",
+    settingsSaved: "Settings saved.",
+    setupCopy: "Set this up once, then open the app and chat anytime.",
+    setupError: "Settings could not be saved. Please check and try again.",
+    setupTitle: "Connect your model",
+    theme: "Theme",
+    untitled: "New chat",
+    unpin: "Unpin",
+    webSearch: "Web",
+  },
+};
+
+function t(key) {
+  const language = state.preferences?.language === "en" ? "en" : "zh";
+  return translations[language][key] || translations.zh[key] || key;
+}
+
+function applyPreferences(preferences) {
+  state.preferences = {
+    language: preferences?.language === "en" ? "en" : "zh",
+    theme: preferences?.theme === "dark" ? "dark" : "light",
+  };
+
+  document.documentElement.lang = state.preferences.language === "en" ? "en" : "zh-CN";
+  document.documentElement.dataset.theme = state.preferences.theme;
+  languageSelect.value = state.preferences.language;
+  themeSelect.value = state.preferences.theme;
+
+  for (const element of document.querySelectorAll("[data-i18n]")) {
+    element.textContent = t(element.dataset.i18n);
+  }
+
+  for (const element of document.querySelectorAll("[data-i18n-placeholder]")) {
+    element.placeholder = t(element.dataset.i18nPlaceholder);
+  }
+
+  for (const element of document.querySelectorAll("[data-i18n-title]")) {
+    element.title = t(element.dataset.i18nTitle);
+  }
+
+  for (const button of modeButtons) {
+    button.classList.toggle("active", button.dataset.mode === reasoningLabel);
+  }
+}
+
+async function savePreferences(nextPreferences) {
+  state.preferences = await window.simpleChat.savePreferences(nextPreferences);
+  applyPreferences(state.preferences);
+  renderChatList();
+  await renderConversation();
+}
 
 function hasConfig(config) {
   return Boolean(config.apiUrl && config.apiKey && config.model);
@@ -111,7 +231,7 @@ function hideChatContextMenu() {
 
 function openRenameModal(conversation) {
   renameConversationId = conversation.id;
-  renameInput.value = conversation.title || "新聊天";
+  renameInput.value = conversation.title || t("untitled");
   renameModal.hidden = false;
   renameInput.focus();
   renameInput.select();
@@ -131,17 +251,17 @@ function openChatContextMenu(conversation, x, y) {
   const renameItem = document.createElement("button");
   renameItem.type = "button";
   renameItem.className = "chat-context-item";
-  renameItem.textContent = "重命名";
+  renameItem.textContent = t("rename");
 
   const pinItem = document.createElement("button");
   pinItem.type = "button";
   pinItem.className = "chat-context-item";
-  pinItem.textContent = conversation.pinned ? "取消置顶" : "置顶";
+  pinItem.textContent = conversation.pinned ? t("unpin") : t("pin");
 
   const deleteItem = document.createElement("button");
   deleteItem.type = "button";
   deleteItem.className = "chat-context-item danger";
-  deleteItem.textContent = "删除";
+  deleteItem.textContent = t("delete");
 
   renameItem.addEventListener("click", () => {
     hideChatContextMenu();
@@ -160,7 +280,7 @@ function openChatContextMenu(conversation, x, y) {
     state.chats = await window.simpleChat.deleteChat(conversation.id);
     renderChatList();
     await renderConversation();
-    setStatus("对话已删除。");
+    setStatus(t("chatDeleted"));
   });
 
   chatContextMenu.append(renameItem, pinItem, deleteItem);
@@ -185,7 +305,7 @@ function showSetup() {
 async function showChat() {
   setupView.hidden = true;
   chatView.hidden = false;
-  modelName.textContent = state.config.model || "未设置模型";
+  modelName.textContent = state.config.model || t("modelFallback");
   renderChatList();
   await renderConversation();
 }
@@ -204,7 +324,7 @@ function renderChatList() {
 
     const title = document.createElement("span");
     title.className = "chat-item-title";
-    title.textContent = conversation.title || "新聊天";
+    title.textContent = conversation.title || t("untitled");
 
     const actions = document.createElement("div");
     actions.className = "chat-item-actions";
@@ -212,15 +332,15 @@ function renderChatList() {
     const pinButton = document.createElement("button");
     pinButton.type = "button";
     pinButton.className = "chat-action-button pin";
-    pinButton.title = conversation.pinned ? "取消置顶" : "置顶";
+    pinButton.title = conversation.pinned ? t("unpin") : t("pin");
     pinButton.setAttribute("aria-label", pinButton.title);
     pinButton.innerHTML = iconSvg("pin");
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "chat-action-button";
-    deleteButton.title = "删除对话";
-    deleteButton.setAttribute("aria-label", "删除对话");
+    deleteButton.title = t("delete");
+    deleteButton.setAttribute("aria-label", t("delete"));
     deleteButton.innerHTML = iconSvg("trash");
 
     button.append(title);
@@ -249,7 +369,7 @@ function renderChatList() {
       hideChatContextMenu();
       renderChatList();
       await renderConversation();
-      setStatus("对话已删除。");
+      setStatus(t("chatDeleted"));
     });
 
     actions.append(pinButton, deleteButton);
@@ -260,13 +380,13 @@ function renderChatList() {
 
 async function renderConversation() {
   const conversation = activeConversation();
-  conversationTitle.textContent = conversation?.title || "新聊天";
+  conversationTitle.textContent = conversation?.title || t("untitled");
   messageList.innerHTML = "";
 
   if (!conversation || !conversation.messages.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "这里还没有聊天记录。写下第一句话，就可以开始了。";
+    empty.textContent = t("emptyState");
     messageList.append(empty);
     return;
   }
@@ -358,7 +478,7 @@ function formConfigFrom(inputs) {
 
 async function saveConfig(config) {
   state.config = await window.simpleChat.saveConfig(config);
-  modelName.textContent = state.config.model;
+  modelName.textContent = state.config.model || t("modelFallback");
 }
 
 setupForm.addEventListener("submit", async (event) => {
@@ -374,7 +494,7 @@ setupForm.addEventListener("submit", async (event) => {
     state.chats = await window.simpleChat.getChats();
     await showChat();
   } catch (error) {
-    setSetupError(error.message || "设置保存失败，请重新检查后再试。");
+    setSetupError(error.message || t("setupError"));
   }
 });
 
@@ -395,7 +515,7 @@ chatForm.addEventListener("submit", async (event) => {
       ...conversation.messages,
       { role: "user", content, images, createdAt: new Date().toISOString() },
     ];
-    conversation.title = conversation.title === "新聊天" ? (content || "图片").slice(0, 32) : conversation.title;
+    conversation.title = conversation.title === "新聊天" || conversation.title === "New chat" ? (content || t("addImage")).slice(0, 32) : conversation.title;
     conversationTitle.textContent = conversation.title;
     await renderConversation();
   }
@@ -415,7 +535,7 @@ chatForm.addEventListener("submit", async (event) => {
     state.chats = await window.simpleChat.getChats();
     renderChatList();
     await renderConversation();
-    setStatus(error.message || "连接失败，请检查 API 地址、密钥或模型名。", true);
+    setStatus(error.message || "Connection failed. Please check the API URL, key, or model name.", true);
   }
 });
 
@@ -454,6 +574,20 @@ for (const button of modeButtons) {
   });
 }
 
+languageSelect.addEventListener("change", async () => {
+  await savePreferences({
+    ...state.preferences,
+    language: languageSelect.value,
+  });
+});
+
+themeSelect.addEventListener("change", async () => {
+  await savePreferences({
+    ...state.preferences,
+    theme: themeSelect.value,
+  });
+});
+
 settingsButton.addEventListener("click", () => {
   settingsApiUrl.value = state.config.apiUrl;
   settingsApiKey.value = state.config.apiKey;
@@ -475,7 +609,7 @@ settingsForm.addEventListener("submit", async (event) => {
 
   await saveConfig(config);
   settingsModal.hidden = true;
-  setStatus("设置已保存。");
+  setStatus(t("settingsSaved"));
 });
 
 renameForm.addEventListener("submit", async (event) => {
@@ -503,7 +637,7 @@ newChatButton.addEventListener("click", async () => {
   state.chats = await window.simpleChat.createChat();
   renderChatList();
   await renderConversation();
-  setStatus("已开始新的聊天。");
+  setStatus(t("newChatStarted"));
 });
 
 messageInput.addEventListener("keydown", (event) => {
@@ -533,6 +667,7 @@ window.addEventListener("scroll", hideChatContextMenu, true);
 
 async function boot() {
   state = await window.simpleChat.getState();
+  applyPreferences(state.preferences);
   if (hasConfig(state.config)) {
     await showChat();
   } else {

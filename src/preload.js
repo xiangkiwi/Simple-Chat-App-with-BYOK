@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld("simpleChat", {
   getState: () => ipcRenderer.invoke("get-state"),
   getChats: () => ipcRenderer.invoke("get-chats"),
   saveConfig: (config) => ipcRenderer.invoke("save-config", config),
+  savePreferences: (preferences) => ipcRenderer.invoke("save-preferences", preferences),
   sendMessage: (payload) => ipcRenderer.invoke("send-message", payload),
   createChat: () => ipcRenderer.invoke("create-chat"),
   setActiveChat: (conversationId) => ipcRenderer.invoke("set-active-chat", conversationId),

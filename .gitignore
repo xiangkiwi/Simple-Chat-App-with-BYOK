@@ -10,6 +10,7 @@ release/
 # Local app data and secrets
 config.json
 chats.json
+preferences.json
 *.env
 .env
 .env.*
