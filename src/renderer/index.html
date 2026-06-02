@@ -89,11 +89,14 @@
                   </label>
                 </div>
                 <div class="composer-right">
-                  <div class="reasoning-control" role="radiogroup" aria-label="回复模式">
-                    <button type="button" class="mode-button active" data-mode="快速" data-i18n="fast">快速</button>
-                    <button type="button" class="mode-button" data-mode="均衡" data-i18n="balanced">均衡</button>
-                    <button type="button" class="mode-button" data-mode="深度" data-i18n="deep">深度</button>
-                  </div>
+                  <label class="reasoning-select-label">
+                    <span data-i18n="reasoningEffort">Reasoning</span>
+                    <select id="reasoningSelect" class="reasoning-select" aria-label="Reasoning effort">
+                      <option value="快速" data-i18n="fast">快速</option>
+                      <option value="均衡" data-i18n="balanced">均衡</option>
+                      <option value="深度" data-i18n="deep">深度</option>
+                    </select>
+                  </label>
                   <button type="submit" class="send-button" aria-label="发送">↑</button>
                 </div>
               </div>

@@ -22,7 +22,7 @@ const closeSettingsButton = document.querySelector("#closeSettingsButton");
 const settingsApiUrl = document.querySelector("#settingsApiUrl");
 const settingsApiKey = document.querySelector("#settingsApiKey");
 const settingsModel = document.querySelector("#settingsModel");
-const modeButtons = Array.from(document.querySelectorAll(".mode-button"));
+const reasoningSelect = document.querySelector("#reasoningSelect");
 const chatList = document.querySelector("#chatList");
 const webSearchToggle = document.querySelector("#webSearchToggle");
 const imageButton = document.querySelector("#imageButton");
@@ -133,6 +133,7 @@ const translations = {
     settingsSaved: "设置已保存。",
     portrait: "竖屏 9:16",
     quality: "清晰度",
+    reasoningEffort: "Reasoning",
     removeImage: "移除图片",
     setupCopy: "只需要设置一次，之后打开就能直接聊天。",
     setupError: "设置保存失败，请重新检查后再试。",
@@ -203,6 +204,7 @@ const translations = {
     settingsSaved: "Settings saved.",
     portrait: "Portrait 9:16",
     quality: "Quality",
+    reasoningEffort: "Reasoning",
     removeImage: "Remove image",
     setupCopy: "Set this up once, then open the app and chat anytime.",
     setupError: "Settings could not be saved. Please check and try again.",
@@ -263,9 +265,7 @@ function applyPreferences(preferences) {
     element.title = t(element.dataset.i18nTitle);
   }
 
-  for (const button of modeButtons) {
-    button.classList.toggle("active", button.dataset.mode === reasoningLabel);
-  }
+  reasoningSelect.value = reasoningLabel;
 }
 
 async function savePreferences(nextPreferences) {
@@ -895,14 +895,9 @@ chatView.addEventListener("drop", async (event) => {
   await addImageFiles(event.dataTransfer.files);
 });
 
-for (const button of modeButtons) {
-  button.addEventListener("click", () => {
-    reasoningLabel = button.dataset.mode;
-    for (const item of modeButtons) {
-      item.classList.toggle("active", item === button);
-    }
-  });
-}
+reasoningSelect.addEventListener("change", () => {
+  reasoningLabel = reasoningSelect.value;
+});
 
 languageSelect.addEventListener("change", async () => {
   await savePreferences({
