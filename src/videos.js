@@ -62,10 +62,15 @@ function deleteVideo(videos, videoId) {
   };
 }
 
+function clearVideos() {
+  return DEFAULT_VIDEOS;
+}
+
 module.exports = {
   DEFAULT_VIDEOS,
   normalizeVideos,
   addVideo,
   deleteVideo,
+  clearVideos,
   normalizeVideoItem,
 };

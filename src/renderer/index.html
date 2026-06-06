@@ -54,15 +54,16 @@
           <div class="sidebar-top">
             <div class="workspace-switcher" role="tablist" aria-label="Workspace">
               <button id="chatWorkspaceButton" class="workspace-button active" type="button" data-i18n="chatWorkspace">聊天</button>
+              <button id="imageWorkspaceButton" class="workspace-button" type="button" data-i18n="imageWorkspace">图片制作</button>
               <button id="videoWorkspaceButton" class="workspace-button" type="button" data-i18n="videoWorkspace">视频制作</button>
             </div>
             <button id="newChatButton" class="ghost-button" type="button" data-i18n="newChat">新聊天</button>
+            <button id="clearChatsButton" class="ghost-button danger-button" type="button" data-i18n="clearChats">清空聊天</button>
           </div>
           <p class="sidebar-label">Chats</p>
           <div class="chat-list" id="chatList"></div>
           <div class="sidebar-bottom-actions">
-            <button id="settingsButton" class="ghost-button" type="button" data-i18n="apiSettings">API 设置</button>
-            <button id="videoSettingsButton" class="ghost-button" type="button" data-i18n="videoApiSettings">Video API</button>
+            <button id="settingsButton" class="ghost-button" type="button" data-i18n="settings">设置</button>
           </div>
         </aside>
 
@@ -148,12 +149,45 @@
               <details class="advanced-video-options">
                 <summary data-i18n="advancedOptions">更多选项</summary>
                 <div class="advanced-grid">
-                  <label>
+                  <label class="duration-field">
                     <span data-i18n="duration">时长</span>
-                    <select id="videoDurationSelect">
-                      <option value="5" data-i18n="fiveSeconds">5 秒</option>
-                      <option value="10" data-i18n="tenSeconds">10 秒</option>
+                    <select id="videoDurationSelect" hidden>
+                      <option value="1">1 秒</option>
+                      <option value="2">2 秒</option>
+                      <option value="3">3 秒</option>
+                      <option value="4">4 秒</option>
+                      <option value="5" selected>5 秒</option>
+                      <option value="6">6 秒</option>
+                      <option value="7">7 秒</option>
+                      <option value="8">8 秒</option>
+                      <option value="9">9 秒</option>
+                      <option value="10">10 秒</option>
+                      <option value="11">11 秒</option>
+                      <option value="12">12 秒</option>
+                      <option value="13">13 秒</option>
+                      <option value="14">14 秒</option>
+                      <option value="15">15 秒</option>
                     </select>
+                    <div id="videoDurationDropdown" class="duration-dropdown">
+                      <button id="videoDurationButton" class="duration-button" type="button" aria-haspopup="listbox" aria-expanded="false">5 秒</button>
+                      <div id="videoDurationMenu" class="duration-menu" role="listbox" hidden>
+                        <button class="duration-option" type="button" role="option" data-value="1">1 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="2">2 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="3">3 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="4">4 秒</button>
+                        <button class="duration-option active" type="button" role="option" data-value="5" aria-selected="true">5 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="6">6 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="7">7 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="8">8 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="9">9 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="10">10 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="11">11 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="12">12 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="13">13 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="14">14 秒</button>
+                        <button class="duration-option" type="button" role="option" data-value="15">15 秒</button>
+                      </div>
+                    </div>
                   </label>
                   <label>
                     <span data-i18n="quality">清晰度</span>
@@ -184,8 +218,62 @@
               </section>
 
               <section class="video-history-section">
-                <p class="sidebar-label" data-i18n="videoHistory">视频历史</p>
+                <div class="history-header">
+                  <p class="sidebar-label" data-i18n="videoHistory">视频历史</p>
+                  <button id="clearVideosButton" class="history-clear-button" type="button" data-i18n="clearHistory">清空</button>
+                </div>
                 <div id="videoHistoryList" class="video-history-list"></div>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="image-workspace" id="imageWorkspace" hidden>
+          <header class="video-header">
+            <div>
+              <p class="conversation-title" data-i18n="imageWorkspace">图片制作</p>
+              <p class="video-subtitle" data-i18n="imageSubtitle">输入文字，也可以加一张参考图来生成图片。</p>
+            </div>
+          </header>
+
+          <div class="video-layout image-layout">
+            <form id="imageForm" class="video-form image-form">
+              <label class="video-prompt-label">
+                <span data-i18n="imagePrompt">图片描述</span>
+                <textarea id="imagePromptInput" rows="6" data-i18n-placeholder="imagePromptPlaceholder" placeholder="描述你想生成的图片"></textarea>
+              </label>
+
+              <div class="video-option-group">
+                <span class="option-label" data-i18n="imageSize">图片尺寸</span>
+                <div class="segmented-options image-size-options" id="imageSizeOptions">
+                  <button type="button" class="segment-button active" data-value="1024x1024" data-i18n="squareImage">方形</button>
+                  <button type="button" class="segment-button" data-value="1024x1792" data-i18n="portraitImage">竖图</button>
+                  <button type="button" class="segment-button" data-value="1792x1024" data-i18n="landscapeImage">横图</button>
+                </div>
+              </div>
+
+              <button id="generateImageButton" type="submit" class="primary-button" data-i18n="generateImage">生成图片</button>
+              <p id="imageStatusText" class="status-text"></p>
+            </form>
+
+            <aside class="video-side-panel image-side-panel">
+              <section id="imageResultPanel" class="video-result-panel image-result-panel" hidden>
+                <p class="sidebar-label" data-i18n="latestImage">最新图片</p>
+                <button id="imageResultPreviewButton" class="generated-image-preview" type="button">
+                  <img id="imageResultPreview" alt="Generated image">
+                </button>
+                <div class="video-actions">
+                  <a id="downloadImageLink" class="ghost-button" download target="_blank" rel="noreferrer" data-i18n="downloadImage">下载</a>
+                  <button id="copyImageLinkButton" class="ghost-button" type="button" data-i18n="copyImageLink">复制链接</button>
+                </div>
+              </section>
+
+              <section class="video-history-section image-history-section">
+                <div class="history-header">
+                  <p class="sidebar-label" data-i18n="imageHistory">图片历史</p>
+                  <button id="clearImagesButton" class="history-clear-button" type="button" data-i18n="clearHistory">清空</button>
+                </div>
+                <div id="imageHistoryList" class="video-history-list image-history-list"></div>
               </section>
             </aside>
           </div>
@@ -193,46 +281,63 @@
       </section>
     </main>
 
-    <div id="settingsModal" class="modal" hidden>
+    <div id="apiSettingsModal" class="modal" hidden>
       <form id="settingsForm" class="modal-panel">
         <div class="modal-header">
           <h2 data-i18n="settings">设置</h2>
           <button id="closeSettingsButton" class="icon-button" type="button">×</button>
         </div>
-        <label>
-          <span>API URL</span>
-          <input id="settingsApiUrl" type="url" required>
-        </label>
-        <label>
-          <span>API Key</span>
-          <input id="settingsApiKey" type="password" required>
-        </label>
-        <label>
-          <span data-i18n="modelName">模型名</span>
-          <input id="settingsModel" type="text" required>
-        </label>
-        <button type="submit" class="primary-button" data-i18n="saveSettings">保存设置</button>
-      </form>
-    </div>
-
-    <div id="videoSettingsModal" class="modal" hidden>
-      <form id="videoSettingsForm" class="modal-panel">
-        <div class="modal-header">
-          <h2 data-i18n="videoApiSettings">Video API 设置</h2>
-          <button id="closeVideoSettingsButton" class="icon-button" type="button">x</button>
+        <div class="settings-tabs" role="tablist">
+          <button id="chatSettingsTab" class="settings-tab active" type="button" data-settings-target="chatSettingsPanel" data-i18n="chatWorkspace">聊天</button>
+          <button id="imageSettingsTab" class="settings-tab" type="button" data-settings-target="imageSettingsPanel" data-i18n="imageWorkspace">图片制作</button>
+          <button id="videoSettingsTab" class="settings-tab" type="button" data-settings-target="videoSettingsPanel" data-i18n="videoWorkspace">视频制作</button>
         </div>
-        <label>
-          <span>Video API URL</span>
-          <input id="videoSettingsApiUrl" type="url" placeholder="https://video-api.example.com/v1" required>
-        </label>
-        <label>
-          <span>Video API Key</span>
-          <input id="videoSettingsApiKey" type="password" required>
-        </label>
-        <label>
-          <span data-i18n="videoModelName">视频模型名</span>
-          <input id="videoSettingsModel" type="text" required>
-        </label>
+
+        <section id="chatSettingsPanel" class="settings-panel">
+          <label>
+            <span>API URL</span>
+            <input id="settingsApiUrl" type="url" required>
+          </label>
+          <label>
+            <span>API Key</span>
+            <input id="settingsApiKey" type="password" required>
+          </label>
+          <label>
+            <span data-i18n="modelName">模型名</span>
+            <input id="settingsModel" type="text" required>
+          </label>
+        </section>
+
+        <section id="imageSettingsPanel" class="settings-panel" hidden>
+          <label>
+            <span>Image API URL</span>
+            <input id="imageSettingsApiUrl" type="url" placeholder="https://image-api.example.com/v1">
+          </label>
+          <label>
+            <span>Image API Key</span>
+            <input id="imageSettingsApiKey" type="password">
+          </label>
+          <label>
+            <span data-i18n="imageModelName">图片模型名</span>
+            <input id="imageSettingsModel" type="text">
+          </label>
+        </section>
+
+        <section id="videoSettingsPanel" class="settings-panel" hidden>
+          <label>
+            <span>Video API URL</span>
+            <input id="videoSettingsApiUrl" type="url" placeholder="https://video-api.example.com/v1">
+          </label>
+          <label>
+            <span>Video API Key</span>
+            <input id="videoSettingsApiKey" type="password">
+          </label>
+          <label>
+            <span data-i18n="videoModelName">视频模型名</span>
+            <input id="videoSettingsModel" type="text">
+          </label>
+        </section>
+
         <button type="submit" class="primary-button" data-i18n="saveSettings">保存设置</button>
       </form>
     </div>

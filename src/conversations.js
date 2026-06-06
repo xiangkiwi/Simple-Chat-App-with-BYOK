@@ -172,6 +172,16 @@ function deleteConversation(chats, conversationId, options = {}) {
   };
 }
 
+function clearConversations(_chats, options = {}) {
+  const now = options.now || defaultNow;
+  const ids = options.ids || defaultId;
+  const conversation = makeConversation({ id: ids(), now });
+  return {
+    activeConversationId: conversation.id,
+    conversations: [conversation],
+  };
+}
+
 function renameConversation(chats, conversationId, title, options = {}) {
   const now = options.now || defaultNow;
   const cleanTitle = String(title || "").replace(/\s+/g, " ").trim();
@@ -216,6 +226,7 @@ module.exports = {
   appendMessagesToActive,
   setActiveConversation,
   deleteConversation,
+  clearConversations,
   renameConversation,
   togglePinnedConversation,
   activeConversation,

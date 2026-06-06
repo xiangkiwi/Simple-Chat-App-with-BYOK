@@ -2,8 +2,10 @@ const setupView = document.querySelector("#setupView");
 const chatView = document.querySelector("#chatView");
 const conversationWorkspace = document.querySelector("#conversationWorkspace");
 const videoWorkspace = document.querySelector("#videoWorkspace");
+const imageWorkspace = document.querySelector("#imageWorkspace");
 const chatWorkspaceButton = document.querySelector("#chatWorkspaceButton");
 const videoWorkspaceButton = document.querySelector("#videoWorkspaceButton");
+const imageWorkspaceButton = document.querySelector("#imageWorkspaceButton");
 const setupForm = document.querySelector("#setupForm");
 const apiUrlInput = document.querySelector("#apiUrlInput");
 const apiKeyInput = document.querySelector("#apiKeyInput");
@@ -16,9 +18,16 @@ const messageInput = document.querySelector("#messageInput");
 const statusText = document.querySelector("#statusText");
 const settingsButton = document.querySelector("#settingsButton");
 const newChatButton = document.querySelector("#newChatButton");
-const settingsModal = document.querySelector("#settingsModal");
+const clearChatsButton = document.querySelector("#clearChatsButton");
+const settingsModal = document.querySelector("#apiSettingsModal");
 const settingsForm = document.querySelector("#settingsForm");
 const closeSettingsButton = document.querySelector("#closeSettingsButton");
+const chatSettingsTab = document.querySelector("#chatSettingsTab");
+const imageSettingsTab = document.querySelector("#imageSettingsTab");
+const videoSettingsTab = document.querySelector("#videoSettingsTab");
+const chatSettingsPanel = document.querySelector("#chatSettingsPanel");
+const imageSettingsPanel = document.querySelector("#imageSettingsPanel");
+const videoSettingsPanel = document.querySelector("#videoSettingsPanel");
 const settingsApiUrl = document.querySelector("#settingsApiUrl");
 const settingsApiKey = document.querySelector("#settingsApiKey");
 const settingsModel = document.querySelector("#settingsModel");
@@ -39,10 +48,6 @@ const imagePreviewModal = document.querySelector("#imagePreviewModal");
 const imagePreviewImage = document.querySelector("#imagePreviewImage");
 const imagePreviewTitle = document.querySelector("#imagePreviewTitle");
 const closeImagePreviewButton = document.querySelector("#closeImagePreviewButton");
-const videoSettingsButton = document.querySelector("#videoSettingsButton");
-const videoSettingsModal = document.querySelector("#videoSettingsModal");
-const videoSettingsForm = document.querySelector("#videoSettingsForm");
-const closeVideoSettingsButton = document.querySelector("#closeVideoSettingsButton");
 const videoSettingsApiUrl = document.querySelector("#videoSettingsApiUrl");
 const videoSettingsApiKey = document.querySelector("#videoSettingsApiKey");
 const videoSettingsModel = document.querySelector("#videoSettingsModel");
@@ -56,6 +61,9 @@ const videoImageThumb = document.querySelector("#videoImageThumb");
 const removeVideoImageButton = document.querySelector("#removeVideoImageButton");
 const aspectRatioOptions = document.querySelector("#aspectRatioOptions");
 const videoDurationSelect = document.querySelector("#videoDurationSelect");
+const videoDurationDropdown = document.querySelector("#videoDurationDropdown");
+const videoDurationButton = document.querySelector("#videoDurationButton");
+const videoDurationMenu = document.querySelector("#videoDurationMenu");
 const videoQualitySelect = document.querySelector("#videoQualitySelect");
 const videoModelOverrideInput = document.querySelector("#videoModelOverrideInput");
 const generateVideoButton = document.querySelector("#generateVideoButton");
@@ -64,7 +72,23 @@ const videoResultPanel = document.querySelector("#videoResultPanel");
 const videoPlayer = document.querySelector("#videoPlayer");
 const downloadVideoLink = document.querySelector("#downloadVideoLink");
 const copyVideoLinkButton = document.querySelector("#copyVideoLinkButton");
+const clearVideosButton = document.querySelector("#clearVideosButton");
 const videoHistoryList = document.querySelector("#videoHistoryList");
+const imageSettingsApiUrl = document.querySelector("#imageSettingsApiUrl");
+const imageSettingsApiKey = document.querySelector("#imageSettingsApiKey");
+const imageSettingsModel = document.querySelector("#imageSettingsModel");
+const imageForm = document.querySelector("#imageForm");
+const imagePromptInput = document.querySelector("#imagePromptInput");
+const imageSizeOptions = document.querySelector("#imageSizeOptions");
+const generateImageButton = document.querySelector("#generateImageButton");
+const imageStatusText = document.querySelector("#imageStatusText");
+const imageResultPanel = document.querySelector("#imageResultPanel");
+const imageResultPreviewButton = document.querySelector("#imageResultPreviewButton");
+const imageResultPreview = document.querySelector("#imageResultPreview");
+const downloadImageLink = document.querySelector("#downloadImageLink");
+const copyImageLinkButton = document.querySelector("#copyImageLinkButton");
+const clearImagesButton = document.querySelector("#clearImagesButton");
+const imageHistoryList = document.querySelector("#imageHistoryList");
 
 const chatContextMenu = document.createElement("div");
 chatContextMenu.className = "chat-context-menu";
@@ -74,8 +98,10 @@ document.body.append(chatContextMenu);
 let state = {
   config: { apiUrl: "", apiKey: "", model: "" },
   videoConfig: { apiUrl: "", apiKey: "", model: "" },
+  imageConfig: { apiUrl: "", apiKey: "", model: "" },
   chats: { activeConversationId: "", conversations: [] },
   videos: { items: [] },
+  images: { items: [] },
   preferences: { language: "zh", theme: "light" },
 };
 let reasoningLabel = "快速";
@@ -83,7 +109,9 @@ let pendingImages = [];
 let pendingVideoImage = null;
 let activeWorkspace = "chat";
 let selectedAspectRatio = "9:16";
+let selectedImageSize = "1024x1024";
 let latestVideoUrl = "";
+let latestImageUrl = "";
 let menuConversationId = "";
 let renameConversationId = "";
 
@@ -236,10 +264,147 @@ translations.zh.imagePreview = "预览图片";
 translations.zh.closePreview = "关闭预览";
 translations.en.imagePreview = "Preview image";
 translations.en.closePreview = "Close preview";
+Object.assign(translations.zh, {
+  copyImageLink: "复制链接",
+  downloadImage: "下载",
+  generateImage: "生成图片",
+  generatingImage: "正在生成图片...",
+  imageApiSettings: "Image API 设置",
+  imageCopied: "图片链接已复制。",
+  imageDeleted: "图片已删除。",
+  imageEmptyHistory: "还没有生成过图片。",
+  imageGenerated: "图片生成完成。",
+  imageHistory: "图片历史",
+  imageModelName: "图片模型名",
+  imagePrompt: "图片描述",
+  imagePromptPlaceholder: "描述你想生成的图片",
+  imageSettingsSaved: "Image API 设置已保存。",
+  imageSize: "图片尺寸",
+  imageSubtitle: "输入文字来生成图片。",
+  imageWorkspace: "图片制作",
+  landscapeImage: "横图",
+  latestImage: "最新图片",
+  portraitImage: "竖图",
+  squareImage: "方形",
+  useSavedImageModel: "使用已保存的图片模型",
+});
+Object.assign(translations.en, {
+  copyImageLink: "Copy link",
+  downloadImage: "Download",
+  generateImage: "Generate image",
+  generatingImage: "Generating image...",
+  imageApiSettings: "Image API settings",
+  imageCopied: "Image link copied.",
+  imageDeleted: "Image deleted.",
+  imageEmptyHistory: "No images yet.",
+  imageGenerated: "Image generated.",
+  imageHistory: "Image history",
+  imageModelName: "Image model name",
+  imagePrompt: "Image description",
+  imagePromptPlaceholder: "Describe the image you want to create",
+  imageSettingsSaved: "Image API settings saved.",
+  imageSize: "Image size",
+  imageSubtitle: "Describe an image to create it.",
+  imageWorkspace: "Image Creation",
+  landscapeImage: "Landscape",
+  latestImage: "Latest image",
+  portraitImage: "Portrait",
+  squareImage: "Square",
+  useSavedImageModel: "Use saved image model",
+});
+
+Object.assign(translations.zh, {
+  chatsCleared: "\u804a\u5929\u5386\u53f2\u5df2\u6e05\u7a7a\u3002",
+  clearChats: "\u6e05\u7a7a\u804a\u5929",
+  clearHistory: "\u6e05\u7a7a",
+  confirmClearChats: "\u786e\u5b9a\u8981\u6e05\u7a7a\u6240\u6709\u804a\u5929\u5386\u53f2\u5417\uff1f",
+  confirmClearImages: "\u786e\u5b9a\u8981\u6e05\u7a7a\u6240\u6709\u56fe\u7247\u5386\u53f2\u5417\uff1f",
+  confirmClearVideos: "\u786e\u5b9a\u8981\u6e05\u7a7a\u6240\u6709\u89c6\u9891\u5386\u53f2\u5417\uff1f",
+  imageHistoryCleared: "\u56fe\u7247\u5386\u53f2\u5df2\u6e05\u7a7a\u3002",
+  settingsSaved: "\u8bbe\u7f6e\u5df2\u4fdd\u5b58\u3002",
+  videoHistoryCleared: "\u89c6\u9891\u5386\u53f2\u5df2\u6e05\u7a7a\u3002",
+  videoStatusCheckingSettings: "\u6b63\u5728\u68c0\u67e5\u89c6\u9891\u8bbe\u7f6e...",
+  videoStatusSaving: "\u6b63\u5728\u4fdd\u5b58\u89c6\u9891\u5386\u53f2...",
+  videoStatusSubmitting: "\u6b63\u5728\u63d0\u4ea4\u89c6\u9891\u8bf7\u6c42...",
+  videoStatusWaiting: "\u8bf7\u6c42\u5df2\u63d0\u4ea4\uff0c\u6b63\u5728\u7b49\u5f85\u89c6\u9891\u8fd4\u56de...",
+});
+
+Object.assign(translations.en, {
+  chatsCleared: "Chat history cleared.",
+  clearChats: "Clear chats",
+  clearHistory: "Clear",
+  confirmClearChats: "Clear all chat history?",
+  confirmClearImages: "Clear all image history?",
+  confirmClearVideos: "Clear all video history?",
+  imageHistoryCleared: "Image history cleared.",
+  videoHistoryCleared: "Video history cleared.",
+  videoStatusCheckingSettings: "Checking video settings...",
+  videoStatusSaving: "Saving video history...",
+  videoStatusSubmitting: "Submitting video request...",
+  videoStatusWaiting: "Request submitted. Waiting for the video...",
+});
 
 function t(key) {
   const language = state.preferences?.language === "en" ? "en" : "zh";
   return translations[language][key] || translations.zh[key] || key;
+}
+
+function durationLabel(value) {
+  return state.preferences?.language === "en" ? `${value} sec` : `${value} 秒`;
+}
+
+function closeVideoDurationMenu() {
+  videoDurationMenu.hidden = true;
+  videoDurationButton.setAttribute("aria-expanded", "false");
+}
+
+function renderVideoDurationDropdown() {
+  const value = videoDurationSelect.value || "5";
+  videoDurationButton.textContent = durationLabel(value);
+
+  for (const option of videoDurationMenu.querySelectorAll(".duration-option")) {
+    const isActive = option.dataset.value === value;
+    option.textContent = durationLabel(option.dataset.value);
+    option.classList.toggle("active", isActive);
+    option.setAttribute("aria-selected", isActive ? "true" : "false");
+  }
+}
+
+function setVideoDuration(value) {
+  videoDurationSelect.value = String(value);
+  renderVideoDurationDropdown();
+  closeVideoDurationMenu();
+}
+
+function showSettingsPanel(panelName) {
+  const target = panelName === "image" ? "imageSettingsPanel" : panelName === "video" ? "videoSettingsPanel" : "chatSettingsPanel";
+
+  for (const tab of [chatSettingsTab, imageSettingsTab, videoSettingsTab]) {
+    const active = tab.dataset.settingsTarget === target;
+    tab.classList.toggle("active", active);
+  }
+
+  for (const panel of [chatSettingsPanel, imageSettingsPanel, videoSettingsPanel]) {
+    panel.hidden = panel.id !== target;
+  }
+}
+
+function fillSettingsForm() {
+  settingsApiUrl.value = state.config.apiUrl || "";
+  settingsApiKey.value = state.config.apiKey || "";
+  settingsModel.value = state.config.model || "";
+  imageSettingsApiUrl.value = state.imageConfig.apiUrl || "";
+  imageSettingsApiKey.value = state.imageConfig.apiKey || "";
+  imageSettingsModel.value = state.imageConfig.model || "";
+  videoSettingsApiUrl.value = state.videoConfig.apiUrl || "";
+  videoSettingsApiKey.value = state.videoConfig.apiKey || "";
+  videoSettingsModel.value = state.videoConfig.model || "";
+}
+
+function openSettingsModal(panelName = "chat") {
+  fillSettingsForm();
+  showSettingsPanel(panelName);
+  settingsModal.hidden = false;
 }
 
 function applyPreferences(preferences) {
@@ -266,6 +431,7 @@ function applyPreferences(preferences) {
   }
 
   reasoningSelect.value = reasoningLabel;
+  renderVideoDurationDropdown();
 }
 
 async function savePreferences(nextPreferences) {
@@ -289,16 +455,27 @@ function setVideoStatus(message, isError = false) {
   videoStatusText.classList.toggle("error", isError);
 }
 
+function setImageStatus(message, isError = false) {
+  imageStatusText.textContent = message;
+  imageStatusText.classList.toggle("error", isError);
+}
+
 function showWorkspace(workspace) {
-  activeWorkspace = workspace === "video" ? "video" : "chat";
+  activeWorkspace = workspace === "image" ? "image" : workspace === "video" ? "video" : "chat";
   conversationWorkspace.hidden = activeWorkspace !== "chat";
   videoWorkspace.hidden = activeWorkspace !== "video";
+  imageWorkspace.hidden = activeWorkspace !== "image";
   chatWorkspaceButton.classList.toggle("active", activeWorkspace === "chat");
   videoWorkspaceButton.classList.toggle("active", activeWorkspace === "video");
+  imageWorkspaceButton.classList.toggle("active", activeWorkspace === "image");
   newChatButton.hidden = activeWorkspace !== "chat";
+  clearChatsButton.hidden = activeWorkspace !== "chat";
   chatList.hidden = activeWorkspace !== "chat";
   if (activeWorkspace === "video") {
     renderVideoHistory();
+  }
+  if (activeWorkspace === "image") {
+    renderImageHistory();
   }
 }
 
@@ -396,6 +573,10 @@ function hasVideoConfig(config) {
   return Boolean(config?.apiUrl && config?.apiKey && config?.model);
 }
 
+function hasImageConfig(config) {
+  return Boolean(config?.apiUrl && config?.apiKey && config?.model);
+}
+
 function renderVideoImage() {
   videoImagePreview.hidden = !pendingVideoImage;
   videoImageEmpty.hidden = Boolean(pendingVideoImage);
@@ -418,6 +599,21 @@ function renderVideoResult(video) {
   videoPlayer.src = video.videoUrl;
   downloadVideoLink.href = video.videoUrl;
   videoResultPanel.hidden = false;
+}
+
+function renderImageResult(image) {
+  if (!image?.imageUrl) {
+    imageResultPanel.hidden = true;
+    latestImageUrl = "";
+    imageResultPreview.removeAttribute("src");
+    return;
+  }
+
+  latestImageUrl = image.imageUrl;
+  imageResultPreview.src = image.imageUrl;
+  imageResultPreview.alt = image.title || t("latestImage");
+  downloadImageLink.href = image.imageUrl;
+  imageResultPanel.hidden = false;
 }
 
 function renderVideoHistory() {
@@ -488,6 +684,112 @@ function renderVideoHistory() {
     item.append(preview, meta, actions);
     videoHistoryList.append(item);
   }
+}
+
+function imagePreviewPayload(image) {
+  return {
+    name: image?.title || t("latestImage"),
+    dataUrl: image?.imageUrl || "",
+  };
+}
+
+function renderImageHistory() {
+  imageHistoryList.innerHTML = "";
+  const images = Array.isArray(state.images?.items) ? state.images.items : [];
+
+  if (!images.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state compact";
+    empty.textContent = t("imageEmptyHistory");
+    imageHistoryList.append(empty);
+    return;
+  }
+
+  for (const image of images) {
+    const item = document.createElement("article");
+    item.className = "video-history-item image-history-item";
+
+    const preview = document.createElement("button");
+    preview.type = "button";
+    preview.className = "video-history-preview image-history-preview";
+    const thumbnail = document.createElement("img");
+    thumbnail.src = image.imageUrl;
+    thumbnail.alt = image.title || t("latestImage");
+    preview.append(thumbnail);
+    preview.addEventListener("click", () => renderImageResult(image));
+
+    const meta = document.createElement("div");
+    meta.className = "video-history-meta";
+    const title = document.createElement("strong");
+    title.textContent = image.title || t("imageWorkspace");
+    const details = document.createElement("span");
+    details.textContent = image.size || "1024x1024";
+    meta.append(title, details);
+
+    const actions = document.createElement("div");
+    actions.className = "video-history-actions";
+
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "chat-action-button";
+    copy.title = t("copyImageLink");
+    copy.textContent = "⧉";
+    copy.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(image.imageUrl);
+      setImageStatus(t("imageCopied"));
+    });
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "chat-action-button";
+    remove.title = t("delete");
+    remove.innerHTML = iconSvg("trash");
+    remove.addEventListener("click", async () => {
+      state.images = await window.simpleChat.deleteImage(image.id);
+      if (latestImageUrl === image.imageUrl) {
+        renderImageResult(null);
+      }
+      renderImageHistory();
+      setImageStatus(t("imageDeleted"));
+    });
+
+    actions.append(copy, remove);
+    item.append(preview, meta, actions);
+    imageHistoryList.append(item);
+  }
+}
+
+async function clearChatHistory() {
+  if (!window.confirm(t("confirmClearChats"))) {
+    return;
+  }
+
+  state.chats = await window.simpleChat.clearChats();
+  renderChatList();
+  await renderConversation();
+  setStatus(t("chatsCleared"));
+}
+
+async function clearVideoHistory() {
+  if (!window.confirm(t("confirmClearVideos"))) {
+    return;
+  }
+
+  state.videos = await window.simpleChat.clearVideos();
+  renderVideoResult(null);
+  renderVideoHistory();
+  setVideoStatus(t("videoHistoryCleared"));
+}
+
+async function clearImageHistory() {
+  if (!window.confirm(t("confirmClearImages"))) {
+    return;
+  }
+
+  state.images = await window.simpleChat.clearImages();
+  renderImageResult(null);
+  renderImageHistory();
+  setImageStatus(t("imageHistoryCleared"));
 }
 
 function makeImagePreviewable(thumbnail, image) {
@@ -570,6 +872,7 @@ async function showChat() {
   showWorkspace(activeWorkspace);
   renderChatList();
   renderVideoHistory();
+  renderImageHistory();
   await renderConversation();
 }
 
@@ -754,6 +1057,14 @@ async function saveVideoConfig(config) {
   });
 }
 
+async function saveImageConfig(config) {
+  state.imageConfig = await window.simpleChat.saveImageConfig({
+    apiUrl: config.apiUrl.value.trim(),
+    apiKey: config.apiKey.value.trim(),
+    model: config.model.value.trim(),
+  });
+}
+
 setupForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const config = formConfigFrom({
@@ -823,6 +1134,7 @@ imageInput.addEventListener("change", async () => {
 
 chatWorkspaceButton.addEventListener("click", () => showWorkspace("chat"));
 videoWorkspaceButton.addEventListener("click", () => showWorkspace("video"));
+imageWorkspaceButton.addEventListener("click", () => showWorkspace("image"));
 
 videoImageDropzone.addEventListener("click", () => {
   videoImageInput.click();
@@ -855,6 +1167,7 @@ videoImageDropzone.addEventListener("dragleave", () => {
 
 videoImageDropzone.addEventListener("drop", async (event) => {
   event.preventDefault();
+  event.stopPropagation();
   videoImageDropzone.classList.remove("dragging");
   const [file] = Array.from(event.dataTransfer.files || []).filter((item) => item.type.startsWith("image/"));
   if (file) {
@@ -873,6 +1186,27 @@ for (const button of aspectRatioOptions.querySelectorAll(".segment-button")) {
   button.addEventListener("click", () => {
     selectedAspectRatio = button.dataset.value;
     for (const item of aspectRatioOptions.querySelectorAll(".segment-button")) {
+      item.classList.toggle("active", item === button);
+    }
+  });
+}
+
+videoDurationButton.addEventListener("click", () => {
+  const shouldOpen = videoDurationMenu.hidden;
+  videoDurationMenu.hidden = !shouldOpen;
+  videoDurationButton.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+});
+
+for (const option of videoDurationMenu.querySelectorAll(".duration-option")) {
+  option.addEventListener("click", () => {
+    setVideoDuration(option.dataset.value);
+  });
+}
+
+for (const button of imageSizeOptions.querySelectorAll(".segment-button")) {
+  button.addEventListener("click", () => {
+    selectedImageSize = button.dataset.value;
+    for (const item of imageSizeOptions.querySelectorAll(".segment-button")) {
       item.classList.toggle("active", item === button);
     }
   });
@@ -913,16 +1247,17 @@ themeSelect.addEventListener("change", async () => {
   });
 });
 
-settingsButton.addEventListener("click", () => {
-  settingsApiUrl.value = state.config.apiUrl;
-  settingsApiKey.value = state.config.apiKey;
-  settingsModel.value = state.config.model;
-  settingsModal.hidden = false;
-});
+settingsButton.addEventListener("click", () => openSettingsModal(activeWorkspace));
 
 closeSettingsButton.addEventListener("click", () => {
   settingsModal.hidden = true;
 });
+
+for (const tab of [chatSettingsTab, imageSettingsTab, videoSettingsTab]) {
+  tab.addEventListener("click", () => {
+    showSettingsPanel(tab.dataset.settingsTarget.replace("SettingsPanel", ""));
+  });
+}
 
 settingsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -933,35 +1268,23 @@ settingsForm.addEventListener("submit", async (event) => {
   });
 
   await saveConfig(config);
-  settingsModal.hidden = true;
-  setStatus(t("settingsSaved"));
-});
-
-videoSettingsButton.addEventListener("click", () => {
-  videoSettingsApiUrl.value = state.videoConfig.apiUrl || "";
-  videoSettingsApiKey.value = state.videoConfig.apiKey || "";
-  videoSettingsModel.value = state.videoConfig.model || "";
-  videoSettingsModal.hidden = false;
-});
-
-closeVideoSettingsButton.addEventListener("click", () => {
-  videoSettingsModal.hidden = true;
-});
-
-videoSettingsForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+  await saveImageConfig({
+    apiUrl: imageSettingsApiUrl,
+    apiKey: imageSettingsApiKey,
+    model: imageSettingsModel,
+  });
   await saveVideoConfig({
     apiUrl: videoSettingsApiUrl,
     apiKey: videoSettingsApiKey,
     model: videoSettingsModel,
   });
-  videoSettingsModal.hidden = true;
-  setVideoStatus(t("videoSettingsSaved"));
+  settingsModal.hidden = true;
+  setStatus(t("settingsSaved"));
 });
 
-videoSettingsModal.addEventListener("click", (event) => {
-  if (event.target === videoSettingsModal) {
-    videoSettingsModal.hidden = true;
+settingsModal.addEventListener("click", (event) => {
+  if (event.target === settingsModal) {
+    settingsModal.hidden = true;
   }
 });
 
@@ -973,24 +1296,28 @@ videoForm.addEventListener("submit", async (event) => {
     return;
   }
 
+  setVideoStatus(t("videoStatusCheckingSettings"));
   if (!hasVideoConfig(state.videoConfig)) {
-    videoSettingsButton.click();
+    openSettingsModal("video");
     setVideoStatus(t("videoApiSettings"), true);
     return;
   }
 
   generateVideoButton.disabled = true;
-  setVideoStatus(t("generatingVideo"));
+  setVideoStatus(t("videoStatusSubmitting"));
 
   try {
-    const result = await window.simpleChat.generateVideo({
+    const payload = {
       prompt,
       image: pendingVideoImage,
       aspectRatio: selectedAspectRatio,
       duration: videoDurationSelect.value,
       quality: videoQualitySelect.value,
       model: videoModelOverrideInput.value.trim() || state.videoConfig.model,
-    });
+    };
+    setVideoStatus(t("videoStatusWaiting"));
+    const result = await window.simpleChat.generateVideo(payload);
+    setVideoStatus(t("videoStatusSaving"));
     state.videos = result.videos;
     renderVideoResult(result.video);
     renderVideoHistory();
@@ -1002,12 +1329,60 @@ videoForm.addEventListener("submit", async (event) => {
   }
 });
 
+imageForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const prompt = imagePromptInput.value.trim();
+  if (!prompt) {
+    setImageStatus(t("imagePromptPlaceholder"), true);
+    return;
+  }
+
+  if (!hasImageConfig(state.imageConfig)) {
+    openSettingsModal("image");
+    setImageStatus(t("imageApiSettings"), true);
+    return;
+  }
+
+  generateImageButton.disabled = true;
+  setImageStatus(t("generatingImage"));
+
+  try {
+    const result = await window.simpleChat.generateImage({
+      prompt,
+      size: selectedImageSize,
+    });
+    state.images = result.images;
+    renderImageResult(result.image);
+    renderImageHistory();
+    setImageStatus(t("imageGenerated"));
+  } catch (error) {
+    setImageStatus(error.message || "Image generation failed.", true);
+  } finally {
+    generateImageButton.disabled = false;
+  }
+});
+
 copyVideoLinkButton.addEventListener("click", async () => {
   if (!latestVideoUrl) {
     return;
   }
   await navigator.clipboard.writeText(latestVideoUrl);
   setVideoStatus(t("videoCopied"));
+});
+
+copyImageLinkButton.addEventListener("click", async () => {
+  if (!latestImageUrl) {
+    return;
+  }
+  await navigator.clipboard.writeText(latestImageUrl);
+  setImageStatus(t("imageCopied"));
+});
+
+imageResultPreviewButton.addEventListener("click", () => {
+  if (!latestImageUrl) {
+    return;
+  }
+  openImagePreview(imagePreviewPayload({ title: t("latestImage"), imageUrl: latestImageUrl }));
 });
 
 renameForm.addEventListener("submit", async (event) => {
@@ -1045,6 +1420,10 @@ newChatButton.addEventListener("click", async () => {
   setStatus(t("newChatStarted"));
 });
 
+clearChatsButton.addEventListener("click", clearChatHistory);
+clearVideosButton.addEventListener("click", clearVideoHistory);
+clearImagesButton.addEventListener("click", clearImageHistory);
+
 messageInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
@@ -1056,19 +1435,23 @@ document.addEventListener("click", (event) => {
   if (!chatContextMenu.contains(event.target)) {
     hideChatContextMenu();
   }
+  if (!videoDurationDropdown.contains(event.target)) {
+    closeVideoDurationMenu();
+  }
 });
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     hideChatContextMenu();
+    closeVideoDurationMenu();
     if (!renameModal.hidden) {
       closeRenameModal();
     }
     if (!imagePreviewModal.hidden) {
       closeImagePreview();
     }
-    if (!videoSettingsModal.hidden) {
-      videoSettingsModal.hidden = true;
+    if (!settingsModal.hidden) {
+      settingsModal.hidden = true;
     }
   }
 });

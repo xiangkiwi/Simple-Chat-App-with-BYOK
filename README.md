@@ -1,20 +1,15 @@
 # Simple Chat App with BYOK
 
-A simple Windows desktop chat app built with Electron. Users bring their own API URL, API key, and model name. The app stores settings locally on the user's computer.
+A simple Windows desktop app built with Electron. It has three workspaces: Chat, Image Creation, and Video Creation. Users bring their own API URL, API key, and model name. All settings and history stay on the user's own computer.
 
 ## Features
 
-- Bring your own API key and API-compatible `/v1` base URL.
-- Local-only settings storage through Electron user data.
-- Conversation history with new chats, delete, rename, and pin support.
-- Language switcher: Chinese and English.
-- Theme switcher: light mode and dark mode.
-- Reasoning effort selector: fast, balanced, and deep.
-- Optional web search toggle for APIs that support Responses API web search tools.
-- Image upload by file picker or drag and drop.
-- Dedicated Video Creation workspace with text-to-video and image-plus-text-to-video inputs.
-- Separate Video API settings, aspect ratio, duration, quality, preview, download, copy link, and local video history.
-- Markdown rendering for assistant replies, including headings, bold text, lists, links, blockquotes, and code blocks.
+- Chat workspace with conversation history, rename, pin, delete, Markdown rendering, image upload, web search toggle, and reasoning effort.
+- Image Creation workspace with text-to-image, image size, preview, download, copy link, local image history, and Clear history.
+- Video Creation workspace with text or image-plus-text input, aspect ratio, 1-15 second duration, quality, preview, download, copy link, staged status messages, local video history, and Clear history.
+- Unified settings modal with separate tabs for Chat API, Image API, and Video API.
+- Chinese and English language switcher.
+- Light and dark theme switcher.
 - Windows NSIS installer build through `electron-builder`.
 
 ## Setup
@@ -47,81 +42,66 @@ The installer is generated under `outputs/dist/`.
 
 ## API Configuration
 
-On first launch, the app asks for:
+Open Settings in the lower-left corner. The Unified settings modal has three tabs:
 
-- `API URL`, for example `https://api.openai.com/v1`
-- `API Key`
-- `Model name`
+- Chat API: `API URL`, `API Key`, and `Model name`
+- Image API: `Image API URL`, `Image API Key`, and `Image model name`
+- Video API: `Video API URL`, `Video API Key`, and `Video model name`
 
-The app sends requests to:
+Chat requests are sent to:
 
 ```text
 {API URL}/responses
 ```
 
-API keys are not committed to this repository. They are entered by the user in the desktop app and stored locally by Electron in the user's app data folder.
-
-## Video API Configuration
-
-The Video Creation workspace has separate settings:
-
-- `Video API URL`, for example `https://video-api.example.com/v1`
-- `Video API Key`
-- `Video model name`
-
-The first implementation sends requests to:
+Image and video requests currently use:
 
 ```text
+{Image API URL}/generate
 {Video API URL}/generate
 ```
 
-The video API is expected to return a direct video URL. The app accepts common response fields such as `video_url`, `videoUrl`, `url`, and `output_url`.
+The image API may return a direct image URL, base64 image data, a data URL, or a Markdown image link. The video API currently expects a direct video URL in common fields such as `video_url`, `videoUrl`, `url`, or `output_url`.
 
 ## Privacy Notes
 
 - No API key is hardcoded in the source code.
-- Local configuration, preferences, chat history, video API settings, and video history are intentionally excluded from Git.
-- Build outputs and `node_modules` are excluded from Git.
+- API settings, preferences, chat history, image history, and video history are saved locally by Electron in the user's app data folder.
+- Local settings, build outputs, and `node_modules` are excluded from Git.
 
 ## Project Structure
 
 ```text
 src/
   api.js                 Responses API request helpers
-  conversations.js       Conversation history, rename, pin, and delete logic
+  conversations.js       Conversation history helpers
+  imageApi.js            Image generation request and response helpers
+  images.js              Local image history helpers
   main.js                Electron main process and IPC handlers
   markdown.js            Safe Markdown rendering
   preferences.js         Language and theme preference helpers
   preload.js             Renderer-safe API bridge
+  renderer/              HTML, CSS, and browser-side app code
+  store.js               Local JSON storage helpers
   videoApi.js            Video generation request and response helpers
   videos.js              Local video history helpers
-  renderer/              HTML, CSS, and browser-side app code
 test/                    Node test suite
 ```
-
-## Notes
-
-This project expects a Responses API-compatible endpoint. Some third-party providers or proxies may differ in tool names or multimodal support, so web search and image inputs depend on the configured API provider.
 
 ---
 
 # Simple Chat App with BYOK 中文说明
 
-这是一个使用 Electron 制作的 Windows 桌面聊天软件。用户可以自己填写 API URL、API Key 和模型名，所有设置都会保存在用户自己的电脑本地。
+这是一个使用 Electron 制作的 Windows 桌面软件。它包含三个工作区：聊天、图片制作、视频制作。用户自己填写 API URL、API Key 和模型名，所有设置和历史都会保存在用户自己的电脑本地。
 
 ## 功能
 
-- 支持用户自带 API Key 和兼容 `/v1` 的 API 地址。
-- 设置只保存在本地 Electron 用户数据目录。
-- 支持对话历史、新聊天、删除、重命名和置顶。
-- 支持语言切换：中文和英文。
-- 支持主题切换：浅色模式和深色模式。
-- 支持 reasoning effort 档位：快速、均衡、深度。
-- 支持联网搜索开关，前提是配置的 API 支持 Responses API web search 工具。
-- 支持选择图片或拖拽图片上传。
-- 支持独立的视频制作页面，可以用文字或文字加图片生成视频。
-- 支持独立 Video API 设置、竖屏/横屏/方形比例、时长、清晰度、视频预览、下载、复制链接和本地视频历史。
-- 支持 Markdown 回复显示，包括标题、加粗、列表、链接、引用和代码块。
+- 聊天工作区：支持对话历史、新聊天、删除、重命名、置顶、Markdown 显示、图片上传、联网开关和 reasoning effort。
+- 图片制作工作区：支持文字生成图片、图片尺寸、预览、下载、复制链接、本地图片历史和清空历史。
+- 视频制作工作区：支持文字或图片加文字生成视频、横竖屏/方形比例、1 到 15 秒时长、清晰度、预览、下载、复制链接、分阶段状态提示、本地视频历史和清空历史。
+- 统一设置窗口：在一个设置弹窗里用三个 tab 分别管理 Chat API、Image API 和 Video API。
+- 支持中文和英文切换。
+- 支持浅色和深色主题。
 - 支持通过 `electron-builder` 构建 Windows NSIS 安装包。
 
 ## 安装和运行
@@ -154,38 +134,29 @@ npm run dist
 
 ## API 设置
 
-第一次打开软件时，需要填写：
+点击左下角的设置。统一设置窗口里有三个 tab：
 
-- `API URL`，例如 `https://api.openai.com/v1`
-- `API Key`
-- `模型名`
+- Chat API：`API URL`、`API Key`、`模型名`
+- Image API：`Image API URL`、`Image API Key`、`图片模型名`
+- Video API：`Video API URL`、`Video API Key`、`视频模型名`
 
-软件会请求：
+聊天请求会发送到：
 
 ```text
 {API URL}/responses
 ```
 
-API Key 不会提交到这个仓库。用户在软件里填写后，会由 Electron 保存在用户电脑本地。
-
-## Video API 设置
-
-视频制作页面有独立设置：
-
-- `Video API URL`，例如 `https://video-api.example.com/v1`
-- `Video API Key`
-- `视频模型名`
-
-软件会请求：
+图片和视频请求目前会发送到：
 
 ```text
+{Image API URL}/generate
 {Video API URL}/generate
 ```
 
-目前版本假设视频 API 会直接返回视频链接。软件支持常见返回字段，例如 `video_url`、`videoUrl`、`url` 和 `output_url`。
+图片 API 可以返回图片链接、base64 图片、data URL 或 Markdown 图片链接。视频 API 目前预期直接返回视频链接，支持常见字段，例如 `video_url`、`videoUrl`、`url` 和 `output_url`。
 
 ## 隐私说明
 
 - 源码里没有硬编码 API Key。
-- 本地配置、偏好设置、聊天记录、Video API 设置和视频历史都不会提交到 Git。
-- 构建产物和 `node_modules` 不会提交到 Git。
+- API 设置、偏好设置、聊天历史、图片历史和视频历史都会由 Electron 保存在用户电脑本地。
+- 本地设置、构建产物和 `node_modules` 不会提交到 Git。

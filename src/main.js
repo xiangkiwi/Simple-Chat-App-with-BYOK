@@ -9,6 +9,7 @@ const {
   appendMessagesToActive,
   setActiveConversation,
   deleteConversation,
+  clearConversations,
   renameConversation,
   togglePinnedConversation,
   activeConversation,
@@ -22,7 +23,17 @@ const {
   extractVideoUrl,
   buildVideoRequestBody,
 } = require("./videoApi");
-const { DEFAULT_VIDEOS, normalizeVideos, addVideo, deleteVideo } = require("./videos");
+const { DEFAULT_VIDEOS, normalizeVideos, addVideo, deleteVideo, clearVideos } = require("./videos");
+const {
+  DEFAULT_IMAGE_CONFIG,
+  normalizeImageConfig,
+  imageGenerateUrl,
+  assertAbsoluteImageApiUrl,
+  extractImageUrl,
+  summarizeImageResponse,
+  buildImageRequestBody,
+} = require("./imageApi");
+const { DEFAULT_IMAGES, normalizeImages, addImage, deleteImage, clearImages } = require("./images");
 
 const DEFAULT_CONFIG = {
   apiUrl: "",
@@ -45,6 +56,8 @@ function filePaths() {
     preferences: path.join(userData, "preferences.json"),
     videoConfig: path.join(userData, "videoConfig.json"),
     videos: path.join(userData, "videos.json"),
+    imageConfig: path.join(userData, "imageConfig.json"),
+    images: path.join(userData, "images.json"),
   };
 }
 
@@ -55,9 +68,12 @@ function loadState() {
   const chats = normalizeChats(readJsonIfExists(paths.chats, DEFAULT_CHATS));
   const preferences = normalizePreferences(readJsonIfExists(paths.preferences, DEFAULT_PREFERENCES));
   const videos = normalizeVideos(readJsonIfExists(paths.videos, DEFAULT_VIDEOS));
+  const imageConfig = normalizeImageConfig(readJsonIfExists(paths.imageConfig, DEFAULT_IMAGE_CONFIG));
+  const images = normalizeImages(readJsonIfExists(paths.images, DEFAULT_IMAGES));
   writeJson(paths.chats, chats);
   writeJson(paths.preferences, preferences);
   writeJson(paths.videos, videos);
+  writeJson(paths.images, images);
 
   return {
     config: {
@@ -66,9 +82,11 @@ function loadState() {
       model: config.model || "",
     },
     videoConfig,
+    imageConfig,
     chats,
     preferences,
     videos,
+    images,
   };
 }
 
@@ -103,6 +121,16 @@ function saveVideos(videos) {
   writeJson(filePaths().videos, normalizeVideos(videos));
 }
 
+function saveImageConfig(config) {
+  const cleanConfig = normalizeImageConfig(config);
+  writeJson(filePaths().imageConfig, cleanConfig);
+  return cleanConfig;
+}
+
+function saveImages(images) {
+  writeJson(filePaths().images, normalizeImages(images));
+}
+
 function validateConfig(config) {
   if (!config.apiUrl || !config.apiKey || !config.model) {
     throw new Error("请先填写 API URL、API Key 和模型名。");
@@ -113,6 +141,66 @@ function validateVideoConfig(config) {
   if (!config.apiUrl || !config.apiKey || !config.model) {
     throw new Error("Please set Video API URL, Video API Key, and video model name first.");
   }
+}
+
+function validateImageConfig(config) {
+  if (!config.apiUrl || !config.apiKey || !config.model) {
+    throw new Error("Please set Image API URL, Image API Key, and image model name first.");
+  }
+}
+
+async function generateImage(_event, payload) {
+  const state = loadState();
+  validateImageConfig(state.imageConfig);
+
+  const prompt = String(payload?.prompt || "").trim();
+  if (!prompt) {
+    throw new Error("Please enter an image description.");
+  }
+  assertAbsoluteImageApiUrl(state.imageConfig.apiUrl);
+
+  const response = await fetch(imageGenerateUrl(state.imageConfig.apiUrl), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${state.imageConfig.apiKey}`,
+    },
+    body: JSON.stringify(
+      buildImageRequestBody({
+        apiUrl: state.imageConfig.apiUrl,
+        model: payload?.model || state.imageConfig.model,
+        prompt,
+        image: payload?.image,
+        size: payload?.size,
+        quality: payload?.quality,
+      })
+    ),
+  });
+
+  const responsePayload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = responsePayload?.error?.message || "Image generation failed. Please check the Image API settings.";
+    throw new Error(message);
+  }
+
+  const imageUrl = extractImageUrl(responsePayload);
+  if (!imageUrl) {
+    throw new Error(`The Image API did not return an image URL. Response preview: ${summarizeImageResponse(responsePayload)}`);
+  }
+
+  const images = addImage(state.images, {
+    prompt,
+    image: payload?.image,
+    imageUrl,
+    size: payload?.size,
+    quality: payload?.quality,
+  });
+  saveImages(images);
+
+  return {
+    image: images.items[0],
+    images,
+  };
 }
 
 async function generateVideo(_event, payload) {
@@ -256,14 +344,32 @@ app.whenReady().then(() => {
   ipcMain.handle("get-state", loadState);
   ipcMain.handle("save-config", (_event, config) => saveConfig(config));
   ipcMain.handle("save-video-config", (_event, config) => saveVideoConfig(config));
+  ipcMain.handle("save-image-config", (_event, config) => saveImageConfig(config));
   ipcMain.handle("save-preferences", (_event, preferences) => savePreferences(preferences));
   ipcMain.handle("send-message", sendMessage);
   ipcMain.handle("generate-video", generateVideo);
+  ipcMain.handle("generate-image", generateImage);
   ipcMain.handle("get-videos", () => loadState().videos);
+  ipcMain.handle("get-images", () => loadState().images);
   ipcMain.handle("delete-video", (_event, videoId) => {
     const videos = deleteVideo(loadState().videos, videoId);
     saveVideos(videos);
     return videos;
+  });
+  ipcMain.handle("clear-videos", () => {
+    const videos = clearVideos();
+    saveVideos(videos);
+    return videos;
+  });
+  ipcMain.handle("delete-image", (_event, imageId) => {
+    const images = deleteImage(loadState().images, imageId);
+    saveImages(images);
+    return images;
+  });
+  ipcMain.handle("clear-images", () => {
+    const images = clearImages();
+    saveImages(images);
+    return images;
   });
   ipcMain.handle("get-chats", () => loadState().chats);
   ipcMain.handle("create-chat", () => {
@@ -278,6 +384,11 @@ app.whenReady().then(() => {
   });
   ipcMain.handle("delete-chat", (_event, conversationId) => {
     const chats = deleteConversation(loadState().chats, conversationId);
+    saveChats(chats);
+    return chats;
+  });
+  ipcMain.handle("clear-chats", () => {
+    const chats = clearConversations(loadState().chats);
     saveChats(chats);
     return chats;
   });

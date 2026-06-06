@@ -6,6 +6,7 @@ const {
   normalizeVideos,
   addVideo,
   deleteVideo,
+  clearVideos,
 } = require("../src/videos");
 
 test("normalizeVideos creates a clean empty history", () => {
@@ -43,4 +44,13 @@ test("deleteVideo removes only the matching item", () => {
 
   assert.equal(deleted.items.length, 1);
   assert.equal(deleted.items[0].prompt, "First");
+});
+
+test("clearVideos removes every history item", () => {
+  const videos = addVideo(DEFAULT_VIDEOS, {
+    prompt: "First",
+    videoUrl: "https://cdn.example.com/first.mp4",
+  });
+
+  assert.deepEqual(clearVideos(videos), DEFAULT_VIDEOS);
 });

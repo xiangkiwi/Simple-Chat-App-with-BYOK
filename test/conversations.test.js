@@ -7,6 +7,7 @@ const {
   appendMessagesToActive,
   setActiveConversation,
   deleteConversation,
+  clearConversations,
   renameConversation,
   togglePinnedConversation,
   activeConversation,
@@ -91,6 +92,22 @@ test("deleting the last conversation creates a blank one", () => {
   assert.equal(deleted.conversations.length, 1);
   assert.equal(deleted.activeConversationId, "chat-2");
   assert.equal(activeConversation(deleted).title, "新聊天");
+});
+
+test("clearing conversations leaves one blank active chat", () => {
+  idNumber = 0;
+  const first = appendMessagesToActive(
+    normalizeChats({}, { now, ids }),
+    [{ role: "user", content: "first chat", createdAt: now() }],
+    { now }
+  );
+  const second = createConversation(first, { now, ids });
+
+  const cleared = clearConversations(second, { now, ids });
+
+  assert.equal(cleared.conversations.length, 1);
+  assert.equal(cleared.activeConversationId, "chat-3");
+  assert.equal(activeConversation(cleared).messages.length, 0);
 });
 
 test("renames a conversation and preserves custom title after new messages", () => {

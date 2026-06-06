@@ -13,6 +13,8 @@ chats.json
 preferences.json
 videoConfig.json
 videos.json
+imageConfig.json
+images.json
 *.env
 .env
 .env.*
